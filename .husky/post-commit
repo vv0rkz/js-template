@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+
+# Получаем последний коммит
+COMMIT_MSG=$(git log -1 --pretty=%B)
+COMMIT_HASH=$(git rev-parse --short HEAD)
+REPO_URL=$(git remote get-url origin | sed 's/git@github.com:/https:\/\/github.com\//' | sed 's/\.git$//')
+
+if echo "$COMMIT_MSG" | grep -q "^fix: #[0-9]"; then
+    ISSUE_NUMBER=$(echo "$COMMIT_MSG" | grep -o '#[0-9]*' | sed 's/#//')
+    echo "🔧 Добавляю ссылку на коммит в issue #$ISSUE_NUMBER..."
+    
+    gh issue close "$ISSUE_NUMBER" --comment "Исправлено в коммите: [$COMMIT_HASH]($REPO_URL/commit/$COMMIT_HASH) - $COMMIT_MSG"
+fi
