@@ -1,5 +1,32 @@
 # Changelog
 
+## v2.4.0
+
+[compare changes](https://github.com/doechon/js-calculator/compare/v2.3.0...v2.4.0)
+
+### ✨ Фичи
+
+- #12 Добавлена синхронизация физической и виртуальной клавиатуры ([#12](https://github.com/doechon/js-calculator/issues/12))
+
+### 📖 Documentation
+
+- Update README with changelog ([ee801d8](https://github.com/doechon/js-calculator/commit/ee801d8))
+- Update README with formatted changelog ([f76d408](https://github.com/doechon/js-calculator/commit/f76d408))
+
+### 🏗️ Инфраструктура
+
+- Добавлена генирация readme ([4f0442a](https://github.com/doechon/js-calculator/commit/4f0442a))
+- Добавлена генирация readme ([a3038fd](https://github.com/doechon/js-calculator/commit/a3038fd))
+- Поправлена проверка правильных веток ([924b4ea](https://github.com/doechon/js-calculator/commit/924b4ea))
+
+### 🛠️ Технические задачи
+
+- Обновлен README и поправлены зависимости ([171639b](https://github.com/doechon/js-calculator/commit/171639b))
+
+### ❤️ Contributors
+
+- Get <ivanchebykin4@gmail.com>
+
 ## v2.3.0
 
 [compare changes](https://github.com/doechon/js-calculator/compare/v2.1.1...v2.3.0)
