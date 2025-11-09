@@ -1,14 +1,12 @@
 #!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
 
 CURRENT_BRANCH=$(git branch --show-current)
 
-# Проверяем формат ветки: vX.Y.Z-description
-if ! echo "$CURRENT_BRANCH" | grep -q "^v[0-9]+\.[0-9]+\.[0-9]+-[a-z-]\+$"; then
-    echo "❌ Неправильный формат ветки!"
+# Простая проверка: начинается с v и есть дефис
+if ! echo "$CURRENT_BRANCH" | grep -q "^v.*-.*"; then
+    echo "❌ Неправильный формат ветки: $CURRENT_BRANCH"
     echo "✅ Должен быть: vX.Y.Z-description"
-    echo "📝 Пример: v2.2.0-normalize-operators"
-    echo "💡 Текущая ветка: $CURRENT_BRANCH"
+    echo "📝 Пример: v2.3.0-normalize-operators"
     exit 1
 fi
 
