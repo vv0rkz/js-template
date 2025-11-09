@@ -46,16 +46,18 @@ const updateRes = (val) => {
         } else if (val === "RM" || val === "Delete") {
             result.textContent = EMPTY_VAL
         } else if (val === "⌫" || val === "Backspace") {
-            if (result.textContent && result.textContent !== "0") {
+            if (result.textContent.length > 1) {
                 result.textContent = result.textContent.slice(0, -1)
             } else {
                 result.textContent = EMPTY_VAL
             }
         } else {
-            // console.log("!isNan(val)", !isNaN(val))
-            if (result.textContent.at(-1) === "0" && !isNaN(val)) {
+            if (result.textContent.split(/[+\-*\/]/).at(-1) === "0") {
                 // Нормализация чисел: автоматически исправлять 0123 → 123
-                result.textContent = result.textContent.slice(1, -1) + val
+                result.textContent = result.textContent.slice(0, -1) + val
+            } else if (isNaN(result.textContent.at(-1)) && isNaN(val)) {
+                // Нормализация операторов: автоматически исправлять +- -> -
+                result.textContent = result.textContent.slice(0, -2) + val
             } else {
                 result.textContent += val
             }
