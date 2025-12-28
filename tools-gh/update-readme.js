@@ -1,113 +1,151 @@
 #!/usr/bin/env node
-import { readFileSync, writeFileSync, existsSync } from "fs"
-import { execSync } from "child_process"
+import { readFileSync, writeFileSync, existsSync } from 'fs'
+import { execSync } from 'child_process'
 
-console.log("🎨 Обновляю README релизами с демо...")
+console.log('🎨 Обновляю README релизами с демо...')
 
-const changelog = readFileSync("CHANGELOG.md", "utf8")
-let readme = readFileSync("README.md", "utf8")
+// Проверяем наличие файлов
+if (!existsSync('CHANGELOG.md')) {
+  console.log('❌ CHANGELOG.md не найден')
+  console.log('💡 Сначала запусти: npm run _ changelog')
+  process.exit(1)
+}
+
+if (!existsSync('README.md')) {
+  console.log('❌ README.md не найден')
+  process.exit(1)
+}
+
+const changelog = readFileSync('CHANGELOG.md', 'utf8')
+let readme = readFileSync('README.md', 'utf8')
+
+// Получаем информацию о репозитории
+let repoUrl
+try {
+  const remoteUrl = execSync('git config --get remote.origin.url').toString().trim()
+  // Преобразуем git@github.com:user/repo.git в https://github.com/user/repo
+  if (remoteUrl.includes('github.com')) {
+    repoUrl = remoteUrl.replace('git@github.com:', 'https://github.com/').replace('.git', '')
+  }
+} catch (error) {
+  console.log('⚠️  Не удалось определить URL репозитория')
+}
 
 // Парсим changelog - ТОЛЬКО версии с демо
-const versionBlocks = changelog.split("## v").slice(1)
-let prettyChangelog = "## 📋 История версий\n\n"
+const versionBlocks = changelog.split('## v').slice(1)
+let prettyChangelog = '## 📋 История версий\n\n'
 const processedVersions = new Set()
 
 versionBlocks.forEach((versionBlock) => {
-    const versionMatch = versionBlock.match(/^(\d+\.\d+\.\d+)/)
-    if (!versionMatch) return
+  const versionMatch = versionBlock.match(/^(\d+\.\d+\.\d+)/)
+  if (!versionMatch) return
 
-    const version = `v${versionMatch[1]}`
-    if (processedVersions.has(version)) return
-    processedVersions.add(version)
+  const version = `v${versionMatch[1]}`
+  if (processedVersions.has(version)) return
+  processedVersions.add(version)
 
-    // ПРОВЕРЯЕМ ДЕМО - если нет демо, пропускаем
-    const hasDemo = existsSync(`docs/${version}.gif`) || existsSync(`docs/${version}.png`)
-    if (!hasDemo) {
-        console.log(`⏭️ Пропускаем ${version} - нет демо`)
-        return
+  // ПРОВЕРЯЕМ ДЕМО - если нет демо, пропускаем
+  const hasDemo = existsSync(`docs/${version}.gif`) || existsSync(`docs/${version}.png`)
+  if (!hasDemo) {
+    console.log(`⏭️  Пропускаем ${version} - нет демо`)
+    return
+  }
+
+  // Пропускаем если нет фич
+  if (!versionBlock.includes('### ✨ Фичи') && !versionBlock.includes('### 🚀')) {
+    console.log(`⏭️  Пропускаем ${version} - нет фич`)
+    return
+  }
+
+  // Извлекаем фичи
+  const features = []
+  const lines = versionBlock.split('\n')
+  let inFeaturesSection = false
+
+  for (const line of lines) {
+    if (line.includes('### ✨ Фичи') || line.includes('### 🚀')) {
+      inFeaturesSection = true
+      continue
     }
+    if (inFeaturesSection && line.includes('### ')) break
+    if (inFeaturesSection && line.trim().startsWith('-') && features.length < 3) {
+      const cleanFeature = line
+        .replace(/^- /, '')
+        .replace(/\(\[#\d+\]\([^)]+\)\)/g, '')
+        .replace(/\[#\d+\]\([^)]+\)/g, '')
+        .replace(/#\d+\s*/, '')
+        .replace(/\[[^\]]+\]\([^)]+\)/g, '')
+        .trim()
 
-    // Пропускаем если нет фич
-    if (!versionBlock.includes("### ✨ Фичи")) {
-        console.log(`⏭️ Пропускаем ${version} - нет фич`)
-        return
+      if (cleanFeature && !cleanFeature.toLowerCase().includes('тест') && cleanFeature.length > 10) {
+        features.push(cleanFeature)
+      }
     }
+  }
 
-    // Извлекаем фичи
-    const features = []
-    const lines = versionBlock.split("\n")
-    let inFeaturesSection = false
+  if (features.length === 0) return
 
-    for (const line of lines) {
-        if (line.includes("### ✨ Фичи")) {
-            inFeaturesSection = true
-            continue
-        }
-        if (inFeaturesSection && line.includes("### ")) break
-        if (inFeaturesSection && line.trim().startsWith("-") && features.length < 3) {
-            const cleanFeature = line
-                .replace(/^- /, "")
-                .replace(/\(\[#\d+\]\([^)]+\)\)/g, "")
-                .replace(/\[#\d+\]\([^)]+\)/g, "")
-                .replace(/#\d+\s*/, "")
-                .replace(/\[[^\]]+\]\([^)]+\)/g, "")
-                .trim()
+  console.log(`✅ Добавляем ${version} - есть демо и ${features.length} фич`)
 
-            if (cleanFeature && !cleanFeature.toLowerCase().includes("тест") && cleanFeature.length > 10) {
-                features.push(cleanFeature)
-            }
-        }
-    }
+  // Форматируем версию
+  prettyChangelog += `### 🟢 ${version}\n\n`
 
-    if (features.length === 0) return
+  // Добавляем демо (гарантированно есть)
+  if (existsSync(`docs/${version}.gif`)) {
+    prettyChangelog += `**Демо работы**  \n<img src="docs/${version}.gif" width="400" />\n\n`
+  } else {
+    prettyChangelog += `**Демо работы**  \n<img src="docs/${version}.png" width="400" />\n\n`
+  }
 
-    console.log(`✅ Добавляем ${version} - есть демо и ${features.length} фич`)
+  // Добавляем функционал
+  prettyChangelog += `**Функционал:**\n`
+  features.forEach((feature) => {
+    prettyChangelog += `- ${feature}\n`
+  })
 
-    // Форматируем версию
-    prettyChangelog += `### 🟢 ${version}\n\n`
+  // Добавляем ссылку на релиз (если есть URL репозитория)
+  if (repoUrl) {
+    prettyChangelog += `\n**Релиз:** ${repoUrl}/releases/tag/${version}\n\n`
+  }
 
-    // Добавляем демо (гарантированно есть)
-    if (existsSync(`docs/${version}.gif`)) {
-        prettyChangelog += `**Демо работы**  \n<img src="docs/${version}.gif" width="400" />\n\n`
-    } else {
-        prettyChangelog += `**Демо работы**  \n<img src="docs/${version}.png" width="400" />\n\n`
-    }
-
-    // Добавляем функционал
-    prettyChangelog += `**Функционал:**\n`
-    features.forEach((feature) => {
-        prettyChangelog += `- ${feature}\n`
-    })
-
-    prettyChangelog += `\n**Релиз:** https://github.com/ione-chebkn/js-calculator/releases/tag/${version}\n\n---\n\n`
+  prettyChangelog += `---\n\n`
 })
 
 // Заменяем секцию между маркерами
-if (readme.includes("<!-- AUTOGENERATED_SECTION START -->")) {
-    const startMarker = "<!-- AUTOGENERATED_SECTION START -->"
-    const endMarker = "<!-- AUTOGENERATED_SECTION END -->"
+if (readme.includes('<!-- AUTOGENERATED_SECTION START -->')) {
+  const startMarker = '<!-- AUTOGENERATED_SECTION START -->'
+  const endMarker = '<!-- AUTOGENERATED_SECTION END -->'
 
-    const startIndex = readme.indexOf(startMarker)
-    const endIndex = readme.indexOf(endMarker, startIndex + startMarker.length)
+  const startIndex = readme.indexOf(startMarker)
+  const endIndex = readme.indexOf(endMarker, startIndex + startMarker.length)
 
-    if (startIndex !== -1 && endIndex !== -1) {
-        readme =
-            readme.substring(0, startIndex + startMarker.length) + "\n" + prettyChangelog + readme.substring(endIndex)
-        console.log("✅ Секция обновлена")
-    }
+  if (startIndex !== -1 && endIndex !== -1) {
+    readme = readme.substring(0, startIndex + startMarker.length) + '\n' + prettyChangelog + readme.substring(endIndex)
+    console.log('✅ Секция обновлена')
+  }
 } else {
-    console.log("❌ Маркер <!-- AUTOGENERATED_SECTION START --> не найден")
-    process.exit(1)
+  console.log('⚠️  Маркер <!-- AUTOGENERATED_SECTION START --> не найден в README.md')
+  console.log('💡 Добавь в README.md:')
+  console.log('   <!-- AUTOGENERATED_SECTION START -->')
+  console.log('   <!-- AUTOGENERATED_SECTION END -->')
+  process.exit(1)
 }
 
 // Сохраняем
-writeFileSync("README.md", readme)
-console.log("✅ README обновлён с релизами, у которых есть демо!")
+writeFileSync('README.md', readme)
+console.log('✅ README обновлён с релизами, у которых есть демо!')
+
+// Пытаемся закоммитить и запушить
 try {
-    execSync("git add README.md", { stdio: "inherit" })
-    execSync('git commit -m "docs: update README with demo releases"', { stdio: "inherit" })
-    execSync("git push", { stdio: "inherit" })
-    console.log("🚀 Изменения запущены!")
+  const status = execSync('git status --porcelain README.md').toString().trim()
+  if (status) {
+    execSync('git add README.md', { stdio: 'inherit' })
+    execSync('git commit -m "docs: update README with demo releases"', { stdio: 'inherit' })
+    execSync('git push', { stdio: 'inherit' })
+    console.log('🚀 Изменения запушены!')
+  } else {
+    console.log('💡 README не изменился')
+  }
 } catch (error) {
-    console.log("💡 README обновлён локально")
+  console.log('💡 README обновлён локально (не удалось запушить автоматически)')
 }

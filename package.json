@@ -1,26 +1,41 @@
 {
-  "name": "js-calculator",
-  "version": "2.4.0",
+  "name": "@vv0rkz/js-template",
+  "version": "1.0.1",
+  "description": "Reusable setup for JS projects with husky, changelog, gh tools",
   "type": "module",
-  "scripts": {
-    "dev": "browser-sync start --server --files '**/*.html, **/*.css, **/*.js' --port 3000 --no-notify",
-    "prepare": "husky",
-    "test": "echo 'No tests yet' && exit 0",
-    "changelog": "changelogen",
-    "update-readme": "node tools-gh/update-readme.js",
-    "release": "node tools-gh/check-demo-for-release.js && changelogen --release && npm run update-readme",
-    "push-release": "node tools-gh/push-release-to-main.js",
-    "bugs": "gh issue list --label bug --state open",
-    "create-bug": "node tools-gh/create-bug.js",
-    "tasks": "gh issue list --label task --state open",
-    "create-task": "node tools-gh/create-task.js",
-    "all-issues": "gh issue list --state open"
+  "bin": {
+    "jst": "./bin/cli.js",
+    "js-template": "./bin/cli.js"
   },
-  "devDependencies": {
+  "files": [
+    "bin/",
+    "templates/",
+    "tools-gh/"
+  ],
+  "scripts": {
+    "test": "echo 'Tests not implemented yet' && exit 0"
+  },
+  "keywords": [
+    "template",
+    "husky",
+    "changelog",
+    "github",
+    "workflow",
+    "commitlint"
+  ],
+  "author": "vv0rkz",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vv0rkz/js-template.git"
+  },
+  "dependencies": {
     "@commitlint/cli": "^20.1.0",
     "@commitlint/config-conventional": "^20.0.0",
-    "browser-sync": "^3.0.4",
     "changelogen": "^0.6.2",
     "husky": "^9.1.7"
+  },
+  "devDependencies": {
+    "browser-sync": "^3.0.4"
   }
 }

@@ -1,25 +1,48 @@
 #!/usr/bin/env node
-import { execSync } from "child_process"
+import { execSync } from 'child_process'
 
-console.log("🚀 Мердж релизной ветки в main...")
+console.log('🚀 Мердж релизной ветки в main...')
 
 try {
-    // 1. Получаем текущую ветку (просто для информации)
-    const currentBranch = execSync("git branch --show-current").toString().trim()
-    console.log(`📁 Текущая ветка: ${currentBranch}`)
+  // 1. Получаем текущую ветку
+  const currentBranch = execSync('git branch --show-current').toString().trim()
 
-    // 2. Мерджим в main
-    console.log("🔀 Переключаемся на main и мерджим...")
-    execSync("git checkout main", { stdio: "inherit" })
-    execSync(`git merge ${currentBranch} --no-ff -m "Release ${currentBranch}"`, { stdio: "inherit" })
+  if (currentBranch === 'main' || currentBranch === 'master') {
+    console.log('⚠️  Вы уже находитесь на главной ветке!')
+    process.exit(0)
+  }
 
-    // 3. Пушим всё (git сам скажет если уже запушено)
-    console.log("📤 Пушим изменения...")
-    execSync("git push origin main", { stdio: "inherit" })
-    execSync("git push --tags", { stdio: "inherit" })
+  console.log(`📁 Текущая ветка: ${currentBranch}`)
 
-    console.log(`✅ Релиз из ветки ${currentBranch} завершён!`)
-} catch (error) {
-    console.error("❌ Ошибка при мердже:", error.message)
+  // 2. Проверяем есть ли изменения для коммита
+  const status = execSync('git status --porcelain').toString().trim()
+  if (status) {
+    console.log('❌ Есть незакоммиченные изменения!')
+    console.log("   Сначала сделай коммит: git add . && git commit -m 'your message'")
     process.exit(1)
+  }
+
+  // 3. Определяем главную ветку (main или master)
+  let mainBranch = 'main'
+  try {
+    execSync('git rev-parse --verify main', { stdio: 'ignore' })
+  } catch {
+    mainBranch = 'master'
+  }
+
+  // 4. Мерджим в main/master
+  console.log(`🔀 Переключаемся на ${mainBranch} и мерджим...`)
+  execSync(`git checkout ${mainBranch}`, { stdio: 'inherit' })
+  execSync(`git merge ${currentBranch} --no-ff -m "Release ${currentBranch}"`, { stdio: 'inherit' })
+
+  // 5. Пушим всё
+  console.log('📤 Пушим изменения...')
+  execSync(`git push origin ${mainBranch}`, { stdio: 'inherit' })
+  execSync('git push --tags', { stdio: 'inherit' })
+
+  console.log(`✅ Релиз из ветки ${currentBranch} завершён!`)
+  console.log(`💡 Теперь можешь удалить ветку: git branch -d ${currentBranch}`)
+} catch (error) {
+  console.error('❌ Ошибка при мердже:', error.message)
+  process.exit(1)
 }
