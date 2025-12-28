@@ -58,25 +58,9 @@ if (existsSync(huskyTemplateDir)) {
   console.log('  ✅ Хуки скопированы')
 }
 
-// 3. Копирование tools-gh
-console.log('\n🔧 Копирование GitHub скриптов...')
-const toolsDir = join(targetDir, 'tools-gh')
-if (!existsSync(toolsDir)) {
-  mkdirSync(toolsDir, { recursive: true })
-}
-
-const toolsSourceDir = join(__dirname, '../tools-gh')
-if (existsSync(toolsSourceDir)) {
-  const toolFiles = readdirSync(toolsSourceDir)
-  toolFiles.forEach((file) => {
-    const src = join(toolsSourceDir, file)
-    const dest = join(toolsDir, file)
-    if (statSync(src).isFile()) {
-      copyFileSync(src, dest)
-      console.log(`  ✅ ${file}`)
-    }
-  })
-}
+// 3. НЕ копируем tools-gh — они остаются в node_modules
+console.log('\n🔧 GitHub скрипты...')
+console.log('  ✅ Используются из @vv0rkz/js-template (не копируются)')
 
 // 4. Добавление скриптов в package.json
 console.log('\n📦 Обновление package.json...')
@@ -128,14 +112,16 @@ console.log(`
 🎉 JS Template успешно установлен!
 
 📖 БЫСТРЫЕ КОМАНДЫ:
-   npm run jst changelog       # или: npm run _ changelog
-   npm run jst release         # или: npm run _ release
-   npm run jst tasks           # или: npm run _ tasks
-   npm run jst create-task     # или: npm run _ create-task
+   npm run _ changelog       # Создать changelog
+   npm run _ release         # Полный релиз
+   npm run _ tasks           # Список задач
+   npm run _ create-task     # Создать задачу
 
 📚 ПОЛНЫЙ СПИСОК:
-   npm run jst
+   npm run _
 
 🚀 Начни работу:
    npm run _ create-task "Моя первая задача"
+
+💡 ВАЖНО: tools-gh скрипты используются из node_modules, не копируются в проект
 `)

@@ -2,19 +2,13 @@
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 import { spawnSync } from 'child_process'
-import { existsSync } from 'fs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const toolsDir = join(__dirname, '../tools-gh')
+const toolsDir = join(__dirname, '../tools-gh') // ВСЕГДА из node_modules
 
 const args = process.argv.slice(2)
 const command = args[0]
 const commandArgs = args.slice(1)
-
-// Проверка наличия tools-gh в текущем проекте
-const projectToolsDir = join(process.cwd(), 'tools-gh')
-const useProjectTools = existsSync(projectToolsDir)
-const scriptsDir = useProjectTools ? projectToolsDir : toolsDir
 
 const commands = {
   init: () => {
@@ -29,7 +23,7 @@ const commands = {
   release: () => {
     console.log('🚀 Запуск релиза...\n')
 
-    const checkDemo = spawnSync('node', [join(scriptsDir, 'check-demo-for-release.js')], { stdio: 'inherit' })
+    const checkDemo = spawnSync('node', [join(toolsDir, 'check-demo-for-release.js')], { stdio: 'inherit' })
     if (checkDemo.status !== 0) {
       console.error('❌ Проверка демо не прошла')
       process.exit(1)
@@ -41,16 +35,16 @@ const commands = {
       process.exit(1)
     }
 
-    spawnSync('node', [join(scriptsDir, 'update-readme.js')], { stdio: 'inherit' })
+    spawnSync('node', [join(toolsDir, 'update-readme.js')], { stdio: 'inherit' })
     console.log('\n✅ Релиз успешно создан!')
   },
 
   'update-readme': () => {
-    spawnSync('node', [join(scriptsDir, 'update-readme.js')], { stdio: 'inherit' })
+    spawnSync('node', [join(toolsDir, 'update-readme.js')], { stdio: 'inherit' })
   },
 
   'push-release': () => {
-    spawnSync('node', [join(scriptsDir, 'push-release-to-main.js')], { stdio: 'inherit' })
+    spawnSync('node', [join(toolsDir, 'push-release-to-main.js')], { stdio: 'inherit' })
   },
 
   bugs: () => {
@@ -59,7 +53,7 @@ const commands = {
 
   'create-bug': () => {
     if (commandArgs.length === 0) {
-      spawnSync('node', [join(scriptsDir, 'create-bug.js')], { stdio: 'inherit' })
+      spawnSync('node', [join(toolsDir, 'create-bug.js')], { stdio: 'inherit' })
     } else {
       const title = commandArgs.join(' ')
       spawnSync('gh', ['issue', 'create', '--label', 'bug', '--title', title], { stdio: 'inherit', shell: true })
@@ -72,7 +66,7 @@ const commands = {
 
   'create-task': () => {
     if (commandArgs.length === 0) {
-      spawnSync('node', [join(scriptsDir, 'create-task.js')], { stdio: 'inherit' })
+      spawnSync('node', [join(toolsDir, 'create-task.js')], { stdio: 'inherit' })
     } else {
       const title = commandArgs.join(' ')
       spawnSync('gh', ['issue', 'create', '--label', 'task', '--title', title], { stdio: 'inherit', shell: true })
