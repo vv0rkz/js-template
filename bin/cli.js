@@ -16,6 +16,10 @@ const commands = {
     spawnSync('node', [initScript], { stdio: 'inherit' })
   },
 
+  'init-readme': () => {
+    spawnSync('node', [join(toolsDir, 'init-readme.js')], { stdio: 'inherit' })
+  },
+
   changelog: () => {
     spawnSync('npx', ['changelogen', ...commandArgs], { stdio: 'inherit', shell: true })
   },
@@ -88,6 +92,7 @@ if (commands[command]) {
 
 📋 ПРОЕКТ:
   jst init                      Инициализация проекта
+  jst init-readme               Создать стартовый README.md
 
 🔧 РАЗРАБОТКА:
   jst changelog                 Создать changelog
