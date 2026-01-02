@@ -107,6 +107,18 @@ try {
 } catch (error) {
   console.log('  ⚠️  Husky уже инициализирован')
 }
+// 7. Настройка GitHub labels
+console.log('\n🏷️  Настройка GitHub labels...')
+try {
+  execSync('gh auth status', { stdio: 'ignore' })
+  const setupLabels = spawnSync('node', [join(toolsDir, 'setup-labels.js')], { stdio: 'inherit' })
+  if (setupLabels.status === 0) {
+    console.log('  ✅ Labels настроены')
+  }
+} catch (error) {
+  console.log('  ⏭️  Пропущено (GitHub CLI не настроен)')
+  console.log('     Запусти позже: npm run _ setup-labels')
+}
 
 console.log(`
 🎉 JS Template успешно установлен!

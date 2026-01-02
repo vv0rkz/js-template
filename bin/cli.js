@@ -26,6 +26,10 @@ const commands = {
     spawnSync('node', [join(toolsDir, 'init-readme.js')], { stdio: 'inherit' })
   },
 
+  'setup-labels': () => {
+    spawnSync('node', [join(toolsDir, 'setup-labels.js')], { stdio: 'inherit' })
+  },
+
   changelog: () => {
     // БЕЗ shell: true
     spawnSync(npxCmd, ['changelogen', ...commandArgs], { stdio: 'inherit' })
@@ -105,6 +109,7 @@ if (commands[command]) {
 📋 ПРОЕКТ:
   jst init                      Инициализация проекта
   jst init-readme               Создать стартовый README.md
+  jst setup-labels              Настроить GitHub labels
 
 🔧 РАЗРАБОТКА:
   jst changelog                 Создать changelog
