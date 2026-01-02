@@ -1,6 +1,6 @@
 {
   "name": "@vv0rkz/js-template",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "description": "Reusable setup for JS projects with husky, changelog, gh tools",
   "type": "module",
   "bin": {
