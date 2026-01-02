@@ -2,13 +2,19 @@
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 import { spawnSync } from 'child_process'
+import { platform } from 'os'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const toolsDir = join(__dirname, '../tools-gh') // ВСЕГДА из node_modules
+const toolsDir = join(__dirname, '../tools-gh')
 
 const args = process.argv.slice(2)
 const command = args[0]
 const commandArgs = args.slice(1)
+
+// Для Windows npx должен быть npx.cmd без shell
+const isWin = platform() === 'win32'
+const npxCmd = isWin ? 'npx.cmd' : 'npx'
+const ghCmd = isWin ? 'gh.exe' : 'gh'
 
 const commands = {
   init: () => {
@@ -21,7 +27,8 @@ const commands = {
   },
 
   changelog: () => {
-    spawnSync('npx', ['changelogen', ...commandArgs], { stdio: 'inherit', shell: true })
+    // БЕЗ shell: true
+    spawnSync(npxCmd, ['changelogen', ...commandArgs], { stdio: 'inherit' })
   },
 
   release: () => {
@@ -33,7 +40,7 @@ const commands = {
       process.exit(1)
     }
 
-    const changelog = spawnSync('npx', ['changelogen', '--release'], { stdio: 'inherit', shell: true })
+    const changelog = spawnSync(npxCmd, ['changelogen', '--release'], { stdio: 'inherit' })
     if (changelog.status !== 0) {
       console.error('❌ Ошибка создания changelog')
       process.exit(1)
@@ -52,7 +59,8 @@ const commands = {
   },
 
   bugs: () => {
-    spawnSync('gh', ['issue', 'list', '--label', 'bug', '--state', 'open'], { stdio: 'inherit', shell: true })
+    // БЕЗ shell: true — убирает warning
+    spawnSync(ghCmd, ['issue', 'list', '--label', 'bug', '--state', 'open'], { stdio: 'inherit' })
   },
 
   'create-bug': () => {
@@ -60,12 +68,14 @@ const commands = {
       spawnSync('node', [join(toolsDir, 'create-bug.js')], { stdio: 'inherit' })
     } else {
       const title = commandArgs.join(' ')
-      spawnSync('gh', ['issue', 'create', '--label', 'bug', '--title', title], { stdio: 'inherit', shell: true })
+      // БЕЗ shell: true — теперь пробелы работают!
+      spawnSync(ghCmd, ['issue', 'create', '--label', 'bug', '--title', title], { stdio: 'inherit' })
     }
   },
 
   tasks: () => {
-    spawnSync('gh', ['issue', 'list', '--label', 'task', '--state', 'open'], { stdio: 'inherit', shell: true })
+    // БЕЗ shell: true
+    spawnSync(ghCmd, ['issue', 'list', '--label', 'task', '--state', 'open'], { stdio: 'inherit' })
   },
 
   'create-task': () => {
@@ -73,12 +83,14 @@ const commands = {
       spawnSync('node', [join(toolsDir, 'create-task.js')], { stdio: 'inherit' })
     } else {
       const title = commandArgs.join(' ')
-      spawnSync('gh', ['issue', 'create', '--label', 'task', '--title', title], { stdio: 'inherit', shell: true })
+      // БЕЗ shell: true — теперь пробелы работают!
+      spawnSync(ghCmd, ['issue', 'create', '--label', 'task', '--title', title], { stdio: 'inherit' })
     }
   },
 
   'all-issues': () => {
-    spawnSync('gh', ['issue', 'list', '--state', 'open'], { stdio: 'inherit', shell: true })
+    // БЕЗ shell: true
+    spawnSync(ghCmd, ['issue', 'list', '--state', 'open'], { stdio: 'inherit' })
   },
 }
 
@@ -109,6 +121,7 @@ if (commands[command]) {
 
 📚 ПРИМЕРЫ:
   jst init
+  jst init-readme
   jst create-task "Добавить темную тему"
   jst release
   jst tasks
