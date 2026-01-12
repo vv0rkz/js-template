@@ -2,29 +2,83 @@
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 import { copyFileSync, mkdirSync, existsSync, readFileSync, writeFileSync, readdirSync, statSync } from 'fs'
-import { execSync } from 'child_process'
+import { execSync, spawnSync } from 'child_process'
+import * as readline from 'readline'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const templateDir = join(__dirname, '../templates')
 const targetDir = process.cwd()
+const toolsDir = join(__dirname, '../tools-gh')
 
 console.log('⚡ JS Template by @vv0rkz — Инициализация проекта\n')
 
-// 1. Копирование конфигов
-console.log('📋 Копирование конфигов...')
+// Функция для интерактивного вопроса
+function askQuestion(query) {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  })
+
+  return new Promise((resolve) =>
+    rl.question(query, (ans) => {
+      rl.close()
+      resolve(ans)
+    })
+  )
+}
+
+// 0. Проверка git репозитория
+console.log('🔍 Проверка git...')
+const hasGit = existsSync(join(targetDir, '.git'))
+
+if (!hasGit) {
+  console.log('  ⚠️  Git репозиторий не найден')
+  const answer = await askQuestion('  ❓ Инициализировать git репозиторий? (Y/n): ')
+
+  if (answer.toLowerCase() !== 'n' && answer.toLowerCase() !== 'no') {
+    try {
+      execSync('git init', { stdio: 'inherit', cwd: targetDir })
+      console.log('  ✅ Git репозиторий создан')
+    } catch (error) {
+      console.log('  ❌ Ошибка создания git репозитория')
+      console.log('     Создай вручную: git init')
+    }
+  } else {
+    console.log('  ⏭️  Git пропущен')
+    console.log('     ⚠️  Без git некоторые функции могут не работать (husky, gh)')
+  }
+} else {
+  console.log('  ✅ Git репозиторий найден')
+}
+
+// 1. Копирование конфигов с интерактивной перезаписью
+console.log('\n📋 Копирование конфигов...')
 const filesToCopy = ['.gitignore', 'changelog.config.js', 'commitlint.config.js']
 
-filesToCopy.forEach((file) => {
+for (const file of filesToCopy) {
   const src = join(templateDir, file)
   const dest = join(targetDir, file)
 
+  if (!existsSync(src)) {
+    console.log(`  ⚠️  ${file} не найден в template (пропускаем)`)
+    continue
+  }
+
   if (existsSync(dest)) {
-    console.log(`  ⚠️  ${file} уже существует, пропускаем`)
+    // Файл существует - спрашиваем что делать
+    const answer = await askQuestion(`  ❓ ${file} уже существует. Перезаписать? (y/N): `)
+
+    if (answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes') {
+      copyFileSync(src, dest)
+      console.log(`  ✅ ${file} (перезаписан)`)
+    } else {
+      console.log(`  ⏭️  ${file} (пропущен)`)
+    }
   } else {
     copyFileSync(src, dest)
     console.log(`  ✅ ${file}`)
   }
-})
+}
 
 // 2. Копирование .husky
 console.log('\n🐶 Настройка husky хуков...')
@@ -33,7 +87,6 @@ if (!existsSync(huskyDir)) {
   mkdirSync(huskyDir, { recursive: true })
 }
 
-// Копирование всей папки .husky
 const huskyTemplateDir = join(templateDir, '.husky')
 if (existsSync(huskyTemplateDir)) {
   const copyDir = (src, dest) => {
@@ -56,9 +109,11 @@ if (existsSync(huskyTemplateDir)) {
 
   copyDir(huskyTemplateDir, huskyDir)
   console.log('  ✅ Хуки скопированы')
+} else {
+  console.log('  ⚠️  .husky не найден в template')
 }
 
-// 3. НЕ копируем tools-gh — они остаются в node_modules
+// 3. НЕ копируем tools-gh
 console.log('\n🔧 GitHub скрипты...')
 console.log('  ✅ Используются из @vv0rkz/js-template (не копируются)')
 
@@ -68,7 +123,6 @@ const packageJsonPath = join(targetDir, 'package.json')
 if (existsSync(packageJsonPath)) {
   const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'))
 
-  // Добавляем только минимум скриптов
   packageJson.scripts = {
     ...packageJson.scripts,
     prepare: 'husky',
@@ -76,11 +130,10 @@ if (existsSync(packageJsonPath)) {
     _: 'jst',
   }
 
-  // Добавляем зависимость
   if (!packageJson.devDependencies) {
     packageJson.devDependencies = {}
   }
-  packageJson.devDependencies['@vv0rkz/js-template'] = '^1.0.0'
+  packageJson.devDependencies['@vv0rkz/js-template'] = '^1.4.0'
 
   writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2))
   console.log('  ✅ Скрипты добавлены')
@@ -107,6 +160,7 @@ try {
 } catch (error) {
   console.log('  ⚠️  Husky уже инициализирован')
 }
+
 // 7. Настройка GitHub labels
 console.log('\n🏷️  Настройка GitHub labels...')
 try {
