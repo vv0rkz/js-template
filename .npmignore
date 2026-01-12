@@ -1,5 +1,0 @@
-.git/
-.github/
-*.md
-!README.md
-!templates/.gitignore

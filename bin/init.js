@@ -53,30 +53,34 @@ if (!hasGit) {
 
 // 1. Копирование конфигов с интерактивной перезаписью
 console.log('\n📋 Копирование конфигов...')
-const filesToCopy = ['.gitignore', 'changelog.config.js', 'commitlint.config.js']
+const filesToCopy = [
+  { src: 'gitignore', dest: '.gitignore' },
+  { src: 'changelog.config.js', dest: 'changelog.config.js' },
+  { src: 'commitlint.config.js', dest: 'commitlint.config.js' },
+]
 
 for (const file of filesToCopy) {
-  const src = join(templateDir, file)
-  const dest = join(targetDir, file)
+  const src = join(templateDir, file.src)
+  const dest = join(targetDir, file.dest)
 
   if (!existsSync(src)) {
-    console.log(`  ⚠️  ${file} не найден в template (пропускаем)`)
+    console.log(`  ⚠️  ${file.dest} не найден в template (пропускаем)`)
     continue
   }
 
   if (existsSync(dest)) {
     // Файл существует - спрашиваем что делать
-    const answer = await askQuestion(`  ❓ ${file} уже существует. Перезаписать? (y/N): `)
+    const answer = await askQuestion(`  ❓ ${file.dest} уже существует. Перезаписать? (y/N): `)
 
     if (answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes') {
       copyFileSync(src, dest)
-      console.log(`  ✅ ${file} (перезаписан)`)
+      console.log(`  ✅ ${file.dest} (перезаписан)`)
     } else {
-      console.log(`  ⏭️  ${file} (пропущен)`)
+      console.log(`  ⏭️  ${file.dest} (пропущен)`)
     }
   } else {
     copyFileSync(src, dest)
-    console.log(`  ✅ ${file}`)
+    console.log(`  ✅ ${file.dest}`)
   }
 }
 
