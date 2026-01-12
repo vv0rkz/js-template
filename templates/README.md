@@ -67,4 +67,4 @@ npm run _ release
 
 ---
 
-Создано с помощью [@vv0rkz/js-template](https://github.com/vv0rkz/js-template)
+README.md создано с помощью [@vv0rkz/js-template](https://github.com/vv0rkz/js-template)
