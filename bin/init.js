@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
-import { copyFileSync, mkdirSync, existsSync, readFileSync, writeFileSync, readdirSync, statSync } from 'fs'
+import { copyFileSync, mkdirSync, existsSync, readFileSync, writeFileSync, readdirSync, statSync, unlinkSync } from 'fs'
 import { execSync, spawnSync } from 'child_process'
 import * as readline from 'readline'
 
@@ -160,6 +160,14 @@ try {
 console.log('\n🔗 Активация husky...')
 try {
   execSync('npx husky init', { stdio: 'inherit', cwd: targetDir })
+
+  // Удаляем дефолтный pre-commit с npm test
+  const defaultPreCommit = join(targetDir, '.husky', 'pre-commit')
+  if (existsSync(defaultPreCommit)) {
+    unlinkSync(defaultPreCommit) // ← Теперь без await import
+    console.log('  🧹 Удалён дефолтный pre-commit')
+  }
+
   console.log('  ✅ Husky активирован')
 } catch (error) {
   console.log('  ⚠️  Husky уже инициализирован')
