@@ -9,19 +9,19 @@
 
 ### 📋 Workflow разработки
 
-```bash
+```
 [ Придумал фичу / Нашёл баг ]
-↓
+        ↓
 [ Создание задачи ] → npm run _ create-task/create-bug
-↓
+        ↓
 [ Разработка в ветке vX.Y.Z-description ]
-↓
+        ↓
 [ Коммиты с валидацией ] → feat/fix: #номер описание
-↓
+        ↓
 [ Добавление демо ] → docs/vX.Y.Z.gif
-↓
+        ↓
 [ Релиз ] → npm run _ release
-↓
+        ↓
 [ Авто-обновление CHANGELOG, README ]
 ```
 
@@ -44,27 +44,27 @@ npm run _ release
 #   - CHANGELOG.md с фичей #9
 #   - Git tag v2.3.0
 #   - README обновляется автономно
-📋 Бэклог задач:
-
-Открытые задачи (tasks)
-
-Активные баги (bugs)
-
-Все issues
-
-🔧 Workflow
-Проект использует @vv0rkz/js-template для автоматизации:
-
-✅ Git hooks (husky) — проверка коммитов
-
-✅ Changelog генерация (changelogen)
-
-✅ GitHub issues integration
-
-✅ Автоматическое обновление версий
-
-📄 Лицензия
-{{LICENSE}} © {{AUTHOR}}
-
-Создано с помощью @vv0rkz/js-template
 ```
+
+## 📋 Бэклог задач
+
+- [Открытые задачи (tasks)]({{REPO_URL}}/issues?q=is:open+is:issue+label:task)
+- [Активные баги (bugs)]({{REPO_URL}}/issues?q=is:open+is:issue+label:bug)
+- [Все issues]({{REPO_URL}}/issues)
+
+## 🔧 Workflow
+
+Проект использует [@vv0rkz/js-template](https://github.com/vv0rkz/js-template) для автоматизации:
+
+- ✅ Git hooks (husky) — проверка коммитов
+- ✅ Changelog генерация (changelogen)
+- ✅ GitHub issues integration
+- ✅ Автоматическое обновление версий
+
+## 📄 Лицензия
+
+{{LICENSE}} © [{{AUTHOR}}]({{REPO_URL}})
+
+---
+
+Создано с помощью [@vv0rkz/js-template](https://github.com/vv0rkz/js-template)
