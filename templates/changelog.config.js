@@ -1,9 +1,9 @@
 export default {
-    types: {
-        feat: { title: "✨ Фичи" },
-        fix: { title: "🐛 Исправленные баги" },
-        build: { title: "🏗️ Инфраструктура" },
-        refactor: { title: "🔧 Рефакторинг", hidden: true },
-        chore: { title: "🛠️ Технические задачи", hidden: true },
-    },
+  types: {
+    feat: { title: '✨ Новые фичи', semver: 'minor' },
+    fix: { title: '🐛 Исправления', semver: 'patch' },
+    refactor: { title: '♻️ Рефакторинг', semver: 'patch' },
+    perf: { title: '⚡ Оптимизация', semver: 'patch' },
+  },
+  contributors: false,
 }

@@ -4,11 +4,10 @@ import { execSync } from 'child_process'
 console.log('🏷️  Настройка GitHub labels...\n')
 
 const labels = [
-  { name: 'task', color: '0E8A16', description: 'Задача для реализации' },
-  { name: 'bug', color: 'D73A4A', description: 'Баг который нужно исправить' },
-  { name: 'enhancement', color: 'A2EEEF', description: 'Улучшение функционала' },
-  { name: 'documentation', color: '0075CA', description: 'Документация' },
-  { name: 'question', color: 'D876E3', description: 'Вопрос' },
+  { name: 'task', color: '0E8A16', description: 'Новая фича' },
+  { name: 'bug', color: 'D73A4A', description: 'Баг' },
+  { name: 'refactor', color: 'FEF2C0', description: 'Рефакторинг/техдолг' },
+  { name: 'perf', color: 'FF6B6B', description: 'Оптимизация производительности' },
 ]
 
 try {
