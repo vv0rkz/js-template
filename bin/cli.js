@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { spawnSync } from 'child_process'
+import { execSync, spawnSync } from 'child_process'
 import { platform } from 'os'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
