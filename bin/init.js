@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-import { fileURLToPath } from 'url'
-import { dirname, join } from 'path'
-import { copyFileSync, mkdirSync, existsSync, readFileSync, writeFileSync, readdirSync, statSync, unlinkSync } from 'fs'
 import { execSync, spawnSync } from 'child_process'
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'fs'
+import { dirname, join } from 'path'
 import * as readline from 'readline'
+import { fileURLToPath } from 'url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const templateDir = join(__dirname, '../templates')
@@ -184,6 +184,13 @@ try {
 } catch (error) {
   console.log('  ⏭️  Пропущено (GitHub CLI не настроен)')
   console.log('     Запусти позже: npm run _ setup-labels')
+}
+
+// 8. Инициализация README
+console.log('\n📝 Инициализация README...')
+const initReadme = spawnSync('node', [join(toolsDir, 'init-readme.js')], { stdio: 'inherit' })
+if (initReadme.status === 0) {
+  console.log('  ✅ README.md создан')
 }
 
 console.log(`

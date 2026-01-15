@@ -128,6 +128,52 @@ const commands = {
     // БЕЗ shell: true
     spawnSync(ghCmd, ['issue', 'list', '--state', 'open'], { stdio: 'inherit' })
   },
+  'pr-list': () => {
+    console.log('📋 Список Pull Requests...\n')
+    spawnSync('gh', ['pr', 'list'], { stdio: 'inherit' })
+  },
+
+  'pr-view': () => {
+    const prNumber = process.argv[3]
+    if (!prNumber) {
+      console.log('❌ Укажи номер PR: npm run _ pr-view 5')
+      process.exit(1)
+    }
+    console.log(`👀 Просмотр PR #${prNumber}...\n`)
+    spawnSync('gh', ['pr', 'view', prNumber], { stdio: 'inherit' })
+  },
+
+  'pr-view-web': () => {
+    const prNumber = process.argv[3]
+    if (!prNumber) {
+      console.log('❌ Укажи номер PR: npm run _ pr-view-web 5')
+      process.exit(1)
+    }
+    console.log(`🌐 Открываю PR #${prNumber} в браузере...`)
+    spawnSync('gh', ['pr', 'view', prNumber, '--web'], { stdio: 'inherit' })
+  },
+
+  'pr-merge': () => {
+    const prNumber = process.argv[3]
+    if (!prNumber) {
+      console.log('❌ Укажи номер PR: npm run _ pr-merge 5')
+      process.exit(1)
+    }
+    console.log(`🔀 Мерджу PR #${prNumber}...\n`)
+    spawnSync('gh', ['pr', 'merge', prNumber, '--merge'], { stdio: 'inherit' })
+    console.log('\n✅ PR смерджен!')
+  },
+
+  'pr-close': () => {
+    const prNumber = process.argv[3]
+    if (!prNumber) {
+      console.log('❌ Укажи номер PR: npm run _ pr-close 5')
+      process.exit(1)
+    }
+    console.log(`❌ Закрываю PR #${prNumber}...\n`)
+    spawnSync('gh', ['pr', 'close', prNumber], { stdio: 'inherit' })
+    console.log('\n✅ PR закрыт!')
+  },
 }
 
 if (commands[command]) {
@@ -136,36 +182,44 @@ if (commands[command]) {
   console.log(`
 ⚡ JS Template CLI
 
-Использование: jst <команда> [аргументы]
+Использование: npm run _ <команда> [аргументы]
 
 📋 ПРОЕКТ:
-  jst init                      Инициализация проекта
-  jst init-readme               Создать стартовый README.md
-  jst setup-labels              Настроить GitHub labels
+  init                      Инициализация проекта
+  init-readme               Создать стартовый README.md
+  setup-labels              Настроить GitHub labels
 
 🔧 РАЗРАБОТКА:
-  jst changelog                 Создать changelog
-  jst release                   Полный релиз (проверка + changelog + README)
-  jst update-readme             Обновить README
-  jst push-release              Запушить релиз в main
+  update-readme             Обновить README с версией
+  release                   Полный релиз (проверка + changelog + README)
+  push-release              Создать PR и смерджить в main
 
-📝 ЗАДАЧИ:
-  jst tasks                        Список задач (фичи)
-  jst create-task [название]       Создать задачу
-  jst bugs                         Список багов
-  jst create-bug [название]        Создать баг
-  jst refactors                    Список рефакторингов
-  jst create-refactor [название]   Создать рефакторинг
-  jst perfs                        Список оптимизаций
-  jst create-perf [название]       Создать оптимизацию
-  jst all-issues                   Все issues
+📝 ISSUES:
+  tasks                        Список задач (фичи)
+  create-task [название]       Создать задачу
+  bugs                         Список багов
+  create-bug [название]        Создать баг
+  refactors                    Список рефакторингов
+  create-refactor [название]   Создать рефакторинг
+  perfs                        Список оптимизаций
+  create-perf [название]       Создать оптимизацию
+  all-issues                   Все issues
+
+🔀 PULL REQUESTS:
+  pr-list                   Показать все PR
+  pr-view <number>          Посмотреть PR в терминале
+  pr-view-web <number>      Открыть PR в браузере
+  pr-merge <number>         Смерджить PR
+  pr-close <number>         Закрыть PR без merge
 
 📚 ПРИМЕРЫ:
-  jst init
-  jst init-readme
-  jst create-task "Добавить темную тему"
-  jst release
-  jst tasks
+  npm run _ init
+  npm run _ init-readme
+  npm run _ feat "Добавить темную тему"
+  npm run _ release
+  npm run _ pr-list
+  npm run _ pr-merge 5
+
   `)
   process.exit(command ? 1 : 0)
 }
