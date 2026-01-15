@@ -7,7 +7,7 @@ const labels = [
   { name: 'task', color: '0E8A16', description: 'Новая фича' },
   { name: 'bug', color: 'D73A4A', description: 'Баг' },
   { name: 'refactor', color: 'FEF2C0', description: 'Рефакторинг/техдолг' },
-  { name: 'perf', color: 'FF6B6B', description: 'Оптимизация производительности' },
+  { name: 'perf', color: '007bff', description: 'Оптимизация производительности' },
 ]
 
 try {
