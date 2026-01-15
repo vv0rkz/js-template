@@ -45,18 +45,56 @@ const commands = {
       process.exit(1)
     }
 
-    // 2. Определяем тип bump из коммитов
-    const commitMessages = execSync('git log --oneline -10', { encoding: 'utf8' })
+    // 2. Определяем тип bump из коммитов после последнего тега
+    let lastTag = 'HEAD~10' // fallback
+    try {
+      lastTag = execSync('git describe --tags --abbrev=0', { encoding: 'utf8' }).trim()
+      console.log(`📌 Последний тег: ${lastTag}`)
+    } catch (error) {
+      console.log('⚠️  Теги не найдены, анализирую последние 10 коммитов')
+    }
+
+    const commitMessages = execSync(`git log ${lastTag}..HEAD --oneline`, { encoding: 'utf8' })
     const bumpType = commitMessages.includes('feat:') ? 'minor' : 'patch'
 
+    console.log(`📊 Коммиты после ${lastTag}:`)
+    console.log(commitMessages)
+    console.log(`🔢 Определён bump type: ${bumpType}\n`)
+
     // 3. Создаём changelog
-    const changelog = spawnSync(npxCmd, ['changelogen', '--release', '--bump', bumpType], { stdio: 'inherit' })
+    console.log('📝 Создание changelog...')
+    const changelog = spawnSync(npxCmd, ['changelogen', '--release', '--bump', bumpType], {
+      stdio: 'pipe',
+      encoding: 'utf8',
+    })
+
     if (changelog.status !== 0) {
-      console.error('❌ Ошибка создания changelog')
+      console.error('❌ Ошибка создания changelog\n')
+
+      // Выводим полный текст ошибки
+      if (changelog.stdout) {
+        console.log('📤 Вывод команды:')
+        console.log(changelog.stdout)
+      }
+
+      if (changelog.stderr) {
+        console.log('📤 Ошибки:')
+        console.log(changelog.stderr)
+      }
+
+      console.log('\n💡 Возможные причины:')
+      console.log('   1. Конфликт тегов - проверь: git tag')
+      console.log('   2. Незакоммиченные изменения - проверь: git status')
+      console.log('   3. Неправильный changelog.config.js')
+      console.log('\n🔧 Попробуй вручную:')
+      console.log(`   npx changelogen --release --bump ${bumpType}`)
       process.exit(1)
     }
 
-    // 4. Обновляем README ← ДОБАВЬ ЭТО
+    // Выводим успешный результат
+    console.log(changelog.stdout)
+
+    // 4. Обновляем README
     console.log('\n📝 Обновление README...')
     const updateReadme = spawnSync('node', [join(toolsDir, 'update-readme.js')], { stdio: 'inherit' })
     if (updateReadme.status !== 0) {
@@ -65,7 +103,7 @@ const commands = {
 
     console.log('\n✅ Релиз успешно создан!')
     console.log('💡 Теперь можно:')
-    console.log('   npm run _ push-release   # Запушить в main')
+    console.log('   npm run _ push-release   # Создать PR и смерджить в main')
   },
 
   'update-readme': () => {
