@@ -192,6 +192,24 @@ const initReadme = spawnSync('node', [join(toolsDir, 'init-readme.js')], { stdio
 if (initReadme.status === 0) {
   console.log('  ✅ README.md создан')
 }
+// 9. Проверка на версию
+const packageJson = JSON.parse(readFileSync('package.json', 'utf8'))
+
+// Проверка версии
+const currentVersion = packageJson.version || '1.0.0'
+if (currentVersion.startsWith('0.')) {
+  console.log('\n⚠️  ВНИМАНИЕ: Текущая версия ' + currentVersion + ' (0.x.x)')
+  console.log('💡 Рекомендуется начинать с версии 1.0.0 для корректной работы changelogen')
+  console.log('   Причина: https://github.com/conventional-changelog/standard-version/issues/539\n')
+
+  const answer = await askQuestion('Изменить версию на 1.0.0? (Y/n): ')
+
+  if (answer.toLowerCase() !== 'n' && answer.toLowerCase() !== 'no') {
+    packageJson.version = '1.0.0'
+    writeFileSync('package.json', JSON.stringify(packageJson, null, 2))
+    console.log('✅ Версия изменена на 1.0.0')
+  }
+}
 
 console.log(`
 🎉 JS Template успешно установлен!
