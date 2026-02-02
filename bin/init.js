@@ -23,7 +23,7 @@ function askQuestion(query) {
     rl.question(query, (ans) => {
       rl.close()
       resolve(ans)
-    })
+    }),
   )
 }
 
@@ -138,6 +138,12 @@ if (existsSync(packageJsonPath)) {
     packageJson.devDependencies = {}
   }
   packageJson.devDependencies['@vv0rkz/js-template'] = '^1.4.0'
+
+  // Проверка и установка type: module для ES модулей
+  if (!packageJson.type || packageJson.type === 'commonjs') {
+    packageJson.type = 'module'
+    console.log('  ⚙️  Установлен "type": "module" (для ES модулей)')
+  }
 
   writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2))
   console.log('  ✅ Скрипты добавлены')
