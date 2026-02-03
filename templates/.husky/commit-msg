@@ -8,19 +8,22 @@ show_help() {
     echo "🎯 РАЗРЕШЕННЫЕ ФОРМАТЫ КОММИТОВ:"
     echo "────────────────────────────────────"
     echo "✨ НОВЫЕ ФИЧИ:    feat: #номер описание"
-    echo "🐛 ИСПРАВЛЕНИЯ:   fix: #номер описание"  
-    echo "🔧 РЕФАКТОРИНГ:   refactor: описание"
-    echo "🏗️  ИНФРАСТРУКТУРА: build: описание"
-    echo "🛠️  ТЕХ. ЗАДАЧИ:  chore: описание"
-    echo "📚 ДОКУМЕНТАЦИЯ:  docs: описание"
+    echo "                  feat(scope): #номер описание"
+    echo "🐛 ИСПРАВЛЕНИЯ:   fix: #номер описание"
+    echo "                  fix(scope): #номер описание"  
+    echo "🔧 РЕФАКТОРИНГ:   refactor: описание ИЛИ refactor(scope): описание"
+    echo "🏗️  ИНФРАСТРУКТУРА: build: описание ИЛИ build(scope): описание"
+    echo "🛠️  ТЕХ. ЗАДАЧИ:  chore: описание ИЛИ chore(scope): описание"
+    echo "📚 ДОКУМЕНТАЦИЯ:  docs: описание ИЛИ docs(scope): описание"
     echo "🚀 АВТО-РЕЛИЗЫ:   chore(release): vX.X.X"
     echo ""
     echo "📝 ПРИМЕРЫ:"
     echo "  feat: #9 добавить нормализацию чисел"
-    echo "  fix: #10 исправить валидацию операторов"
+    echo "  feat(parser): #9 добавить нормализацию чисел"
+    echo "  fix: #10 исправить валидацию"
+    echo "  fix(validator): #10 исправить валидацию операторов"
     echo "  refactor: оптимизировать алгоритм"
-    echo "  chore: обновить зависимости"
-    echo "  docs: обновить README"
+    echo "  docs(observer): добавлен пример redux"
     echo "  chore(release): v2.3.0"
     echo "────────────────────────────────────"
     exit 1
@@ -33,14 +36,14 @@ if echo "$COMMIT_MSG" | grep -q "^chore(release): v[0-9]\+\.[0-9]\+\.[0-9]\+$"; 
 fi
 
 # СТРОГАЯ ПРОВЕРКА для обычных коммитов
-if ! echo "$COMMIT_MSG" | grep -q -E "^(feat: #[0-9]+ .+|fix: #[0-9]+ .+|refactor: .+|build: .+|chore: .+|docs: .+)"; then
+if ! echo "$COMMIT_MSG" | grep -q -E "^(feat(\(.+\))?: #[0-9]+ .+|fix(\(.+\))?: #[0-9]+ .+|refactor(\(.+\))?: .+|build(\(.+\))?: .+|chore(\(.+\))?: .+|docs(\(.+\))?: .+)"; then
     echo "❌ Неправильный формат коммита: '$COMMIT_MSG'"
     show_help
 fi
 
 # Дополнительная проверка: feat/fix должны иметь #номер
-if echo "$COMMIT_MSG" | grep -q "^\(feat\|fix\):"; then
-    if ! echo "$COMMIT_MSG" | grep -q "^\(feat\|fix\): #[0-9]"; then
+if echo "$COMMIT_MSG" | grep -q "^\(feat\|fix\)"; then
+    if ! echo "$COMMIT_MSG" | grep -q "^\(feat\|fix\)\(\(.*\)\)\?: #[0-9]"; then
         echo "❌ Ошибка: feat и fix коммиты должны содержать номер задачи"
         echo "💡 Твой коммит: $COMMIT_MSG"
         echo "✅ Пример: feat: #9 добавить нормализацию чисел"
