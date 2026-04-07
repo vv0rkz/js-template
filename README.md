@@ -1,150 +1,224 @@
 # @vv0rkz/js-template
 
-⚡ Переиспользуемый шаблон для JS проектов с husky, changelog, GitHub tools
+Переиспользуемый шаблон для JS проектов с husky, changelog, GitHub tools и конфигурируемым workflow.
 
-## 🚀 Установка
-
-npm install -D @vv0rkz/js-template
-npx jst init
-
-## 💻 Использование
+## Установка (новый проект)
 
 ```bash
-# Короткая команда (рекомендуется)
-
-npm run _ tasks
-npm run _ release
-npm run _ create-task "Новая фича"
-
-# Или полная
-npm run jst tasks
-npm run jst release
+npm install -D @vv0rkz/js-template
+npx jst init
 ```
 
-## 📋 Команды
+`init` создаст все конфиги, хуки, labels и настроит проект.
 
-### Управление проектом
+## Обновление (существующий проект)
 
-- `jst init` — инициализация проекта
+```bash
+npm update @vv0rkz/js-template
+npx jst upgrade
+```
+
+`upgrade` обновит хуки, конфиги commitlint/changelog, и создаст `jst.config.js` если его ещё нет.
+
+## Конфигурация
+
+Все настройки в одном файле — `jst.config.js` в корне проекта.
+
+```js
+export default {
+  // Формат веток (шаблоны, не regex)
+  branch: {
+    main: 'main',
+    patterns: [
+      'v{version}-{name}',          // v2.3.0-dark-theme
+      // 'feature/#{issue}-{name}', // feature/#12-dark-theme
+      // 'release/v{version}',      // release/v2.3.0
+    ],
+  },
+
+  // GitHub labels
+  labels: [
+    { name: 'task', color: '0E8A16', description: 'Новая фича', emoji: '✨' },
+    { name: 'bug',  color: 'D73A4A', description: 'Баг',        emoji: '🐛' },
+    // добавь свои...
+  ],
+
+  // Правила коммитов
+  commits: {
+    types: ['feat', 'fix', 'refactor', 'build', 'chore', 'docs', 'perf'],
+    requireIssue: ['feat', 'fix'],   // эти типы требуют #номер
+    closeKeyword: 'close',           // слово для закрытия issue
+  },
+
+  // Релиз
+  release: {
+    requireDemo: true,               // требовать GIF/PNG перед релизом
+    demoDir: 'docs',                 // где искать демо
+    demoFormats: ['gif', 'png'],
+  },
+
+  // Автообновление зависимостей
+  depUpdater: false,                 // 'dependabot' | 'renovate' | false
+
+  // Репозиторий JST для report-issue
+  jstRepo: 'vv0rkz/js-template',
+}
+```
+
+### Что автоматическое, а что нужно применить вручную
+
+| Что изменил | Когда вступит в силу |
+|---|---|
+| `branch.pattern` | На следующем `git push` |
+| `commits.*` | На следующем `git commit` |
+| `release.*` | На следующем `jst release` |
+| `labels` | После `jst setup-labels` или `jst apply` |
+| `depUpdater` | После `jst setup-deps` или `jst apply` |
+
+Короткий путь — `jst apply` применит labels + deps за раз.
+
+## Команды
+
+```bash
+npm run _ <команда>     # короткая форма
+npm run jst <команда>   # полная форма
+npx jst <команда>       # напрямую
+```
+
+### Проект
+
+| Команда | Описание |
+|---|---|
+| `init` | Инициализация нового проекта |
+| `upgrade` | Обновить конфиги после `npm update` |
+| `apply` | Применить изменения из `jst.config.js` |
+| `setup-labels` | Настроить GitHub labels |
+| `setup-deps` | Настроить dependabot/renovate |
 
 ### Разработка
 
-- `jst changelog` — создать changelog
-- `jst release` — полный релиз (проверка + changelog + README)
-- `jst update-readme` — обновить README
-- `jst push-release` — запушить релиз в main
+| Команда | Описание |
+|---|---|
+| `release` | Полный релиз (changelog + README) |
+| `push-release` | Создать PR и смерджить в main |
+| `changelog` | Создать changelog |
+| `update-readme` | Обновить README с версией |
 
-### Управление задачами
+### Issues (текущий проект)
 
-- `jst tasks` — список открытых задач
-- `jst create-task [название]` — создать задачу
-- `jst bugs` — список открытых багов
-- `jst create-bug [название]` — создать баг
-- `jst all-issues` — все открытые issues
+| Команда | Описание |
+|---|---|
+| `tasks` | Список задач |
+| `create-task [название]` | Создать задачу |
+| `bugs` | Список багов |
+| `create-bug [название]` | Создать баг |
+| `refactors` | Список рефакторингов |
+| `create-refactor [название]` | Создать рефакторинг |
+| `perfs` | Список оптимизаций |
+| `create-perf [название]` | Создать оптимизацию |
+| `all-issues` | Все открытые issues |
+| `report-issue [описание]` | Сообщить о проблеме в JST |
 
-## 📦 Что устанавливается
+### Pull Requests
 
-- ✅ Husky + хуки (commit-msg, pre-push, post-commit)
-- ✅ Commitlint конфиг (проверка коммитов)
-- ✅ Changelogen конфиг (автогенерация changelog)
-- ✅ GitHub tools скрипты (управление задачами)
-- ✅ .gitignore (готовый файл)
+| Команда | Описание |
+|---|---|
+| `pr-list` | Показать все PR |
+| `pr-view <n>` | Посмотреть PR в терминале |
+| `pr-view-web <n>` | Открыть PR в браузере |
+| `pr-merge <n>` | Смерджить PR |
+| `pr-close <n>` | Закрыть PR без merge |
 
-## 🎯 Пример использования
-
-### Установка в новый проект
+## Формат коммитов
 
 ```bash
-mkdir my-awesome-js-project
-cd my-awesome-js-project
-npm init -y
-npm install -D @vv0rkz/js-template
-npx jst init
+feat: #9 добавить тёмную тему               # фича, ссылка на issue
+feat(Date): #9 добавить форматирование      # фича со scope
+feat: close #9 добавить тёмную тему         # фича + закрыть issue
+feat(parser): close #9 финализировать       # scope + закрыть issue
+fix: #10 исправить валидацию                # фикс, ссылка на issue
+fix(auth): close #10 исправить валидацию    # фикс + scope + закрыть
+refactor: оптимизировать алгоритм           # без issue
+refactor(utils): оптимизировать хелперы     # без issue, со scope
+docs: обновить README                       # без issue
+chore(release): v1.2.0                      # авто-релиз
 ```
 
-### Работа с задачами
+### Когда issue закрывается
+
+По умолчанию `feat: #9 ...` и `fix: #9 ...` **не закрывают** issue — только ссылаются. Чтобы закрыть, добавь ключевое слово `close` перед номером:
 
 ```bash
-Создать задачу
-npm run _ create-task "Добавить темную тему"
-
-Посмотреть все задачи
-npm run _ tasks
-
-Создать баг
-npm run _ create-bug "Кнопка не работает"
-
-Посмотреть баги
-npm run _ bugs
+# Несколько коммитов по одной задаче
+git commit -m "feat: #9 добавить компонент кнопки"
+git commit -m "feat: #9 добавить стили кнопки"
+git commit -m "feat: close #9 финализировать кнопку"  # ← закроет issue
 ```
 
-### Релиз версии
+Ключевое слово настраивается через `commits.closeKeyword` в конфиге.
 
+## Формат веток
+
+Ветки задаются шаблонами, без regex. Доступные плейсхолдеры:
+
+| Плейсхолдер | Что матчит | Пример |
+|---|---|---|
+| `{version}` | Семвер X.Y.Z | `2.3.0` |
+| `{issue}` | Номер issue | `12` |
+| `{name}` | Описание (буквы, цифры, `-`, `_`) | `dark-theme` |
+| `*` | Что угодно | `anything/here` |
+
+```js
+// Классический стиль
+patterns: ['v{version}-{name}']
+// ✅ v2.3.0-normalize-operators
+
+// GitHub Flow стиль
+patterns: ['feature/#{issue}-{name}', 'fix/#{issue}-{name}', 'release/v{version}']
+// ✅ feature/#12-dark-theme
+// ✅ fix/#7-validation-bug
+// ✅ release/v2.3.0
+
+// Без ограничений
+patterns: ['*']
 ```
-Сделать фичу
-git add .
-git commit -m "feat: добавлена темная тема"
 
-Создать релиз
+## Типичный workflow
+
+```bash
+# 1. Создать задачу
+npm run _ create-task "Добавить тёмную тему"     # → issue #12
+
+# 2. Создать ветку
+git checkout -b v1.3.0-dark-theme
+
+# 3. Работать и коммитить
+git commit -m "feat: #12 добавить переключатель темы"
+git commit -m "feat: #12 добавить CSS переменные"
+git commit -m "feat: close #12 финальные стили"   # закрыть issue
+
+# 4. Релиз
 npm run _ release
-
-Запушить в main
 npm run _ push-release
 ```
 
-## 📁 Структура проекта после установки
+## Что устанавливается при init
 
-```
-my-project/
-├── .husky/
-│ ├── commit-msg # Проверка формата коммитов
-│ ├── pre-push # Запуск тестов перед push
-│ └── post-commit # Сообщение после коммита
-├── tools-gh/ # GitHub утилиты
-│ ├── create-task.js
-│ ├── create-bug.js
-│ ├── update-readme.js
-│ └── ...
-├── .gitignore # Готовый .gitignore
-├── changelog.config.js # Конфиг для changelog
-├── commitlint.config.js # Правила для коммитов
-└── package.json # С готовыми скриптами
-```
+- `jst.config.js` — единый конфиг проекта
+- `.husky/` — хуки (commit-msg, pre-push, post-commit)
+- `commitlint.config.js` — проверка коммитов (читает из jst.config.js)
+- `changelog.config.js` — генерация changelog (читает из jst.config.js)
+- `.gitignore`
+- GitHub labels (если установлен `gh`)
+- dependabot/renovate (если включён в конфиге)
 
-## 🛠️ Технологии
+## Технологии
 
 - [Husky](https://typicode.github.io/husky/) — Git hooks
 - [Commitlint](https://commitlint.js.org/) — Проверка коммитов
 - [Changelogen](https://github.com/unjs/changelogen) — Генерация changelog
 - [GitHub CLI](https://cli.github.com/) — Управление issues
 
-## 📝 Формат коммитов
-
-feat: новая функция
-fix: исправление бага
-docs: изменения в документации
-refactor: рефакторинг кода
-perf: улучшение производительности
-test: добавление тестов
-chore: обновление зависимостей
-
-## 📄 Лицензия
+## Лицензия
 
 MIT © [vv0rkz](https://github.com/vv0rkz)
-
-```bash
-# 🚀 Публикация
-cd js-template
-npm login
-npm publish --access public
-# 💻 Использование в проекте
-
-# В новом проекте
-npm install -D @vv0rkz/js-template
-npx jst init
-
-# Работа через короткую команду _
-npm run _ tasks
-npm run _ release
-npm run _ create-task "Моя задача"
-```

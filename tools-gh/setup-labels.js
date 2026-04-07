@@ -1,17 +1,14 @@
 #!/usr/bin/env node
 import { execSync } from 'child_process'
+import { loadConfig } from './config.js'
+
+const config = await loadConfig()
 
 console.log('🏷️  Настройка GitHub labels...\n')
 
-const labels = [
-  { name: 'task', color: '0E8A16', description: 'Новая фича' },
-  { name: 'bug', color: 'D73A4A', description: 'Баг' },
-  { name: 'refactor', color: 'FEF2C0', description: 'Рефакторинг/техдолг' },
-  { name: 'perf', color: '007bff', description: 'Оптимизация производительности' },
-]
+const labels = config.labels
 
 try {
-  // Проверяем что gh установлен и авторизован
   execSync('gh auth status', { stdio: 'ignore' })
 } catch (error) {
   console.error('❌ GitHub CLI не установлен или не авторизован')
@@ -20,7 +17,6 @@ try {
   process.exit(1)
 }
 
-// Получаем существующие labels
 let existingLabels = []
 try {
   const output = execSync('gh label list --json name', { encoding: 'utf8' })
@@ -29,7 +25,6 @@ try {
   console.log('⚠️  Не удалось получить список labels (возможно репозиторий пустой)')
 }
 
-// Создаём недостающие labels
 let created = 0
 let skipped = 0
 

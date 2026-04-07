@@ -1,27 +1,47 @@
 #!/usr/bin/env node
 import { execSync, spawnSync } from 'child_process'
+import { existsSync, readFileSync } from 'fs'
 import { platform } from 'os'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
+import { loadConfig } from './config.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const isWin = platform() === 'win32'
 const npxCmd = isWin ? 'npx.cmd' : 'npx'
+const config = await loadConfig()
 
 console.log('🚀 Запуск релиза...\n')
 
-// 1. Проверка демо
-const checkDemo = spawnSync('node', [join(__dirname, 'check-demo-for-release.js')], { stdio: 'inherit' })
-if (checkDemo.status !== 0) {
-  console.error('❌ Проверка демо не прошла')
-  process.exit(1)
-}
-
-// 2. Получаем текущую версию
-const currentVersion = JSON.parse(execSync('npm pkg get version', { encoding: 'utf8' })).replace(/"/g, '')
+// 1. Current version
+const currentVersion = JSON.parse(readFileSync('package.json', 'utf8')).version
 console.log(`📦 Текущая версия: ${currentVersion}`)
 
-// 3. Предупреждение для 0.x.x
+// 2. Demo check (configurable)
+if (config.release.requireDemo) {
+  const [major, minor, patch] = currentVersion.split('.').map(Number)
+  const recentCommits = execSync('git log --oneline -10', { encoding: 'utf8' })
+  const nextVersion = recentCommits.includes('feat:')
+    ? `v${major}.${minor + 1}.0`
+    : `v${major}.${minor}.${patch + 1}`
+
+  console.log(`📦 Предполагаемая следующая версия: ${nextVersion}`)
+
+  const { demoDir, demoFormats } = config.release
+  const hasDemo = demoFormats.some((fmt) => existsSync(`${demoDir}/${nextVersion}.${fmt}`))
+
+  if (!hasDemo) {
+    console.log(`❌ Релиз ${nextVersion} требует демо!`)
+    console.log(`📸 Создай: ${demoDir}/${nextVersion}.${demoFormats[0]}`)
+    process.exit(1)
+  }
+
+  console.log(`✅ Демо для ${nextVersion} готово!`)
+} else {
+  console.log('⏭️  Проверка демо отключена (release.requireDemo = false)')
+}
+
+// 3. Warning for 0.x.x
 if (currentVersion.startsWith('0.')) {
   console.log('\n⚠️  ВНИМАНИЕ: Версия 0.x.x имеет особое поведение!')
   console.log('💡 changelogen для версий < 1.0.0:')
@@ -29,56 +49,54 @@ if (currentVersion.startsWith('0.')) {
   console.log('   • fix: коммиты → patch bump (0.1.0 → 0.1.1)')
   console.log('   • BREAKING CHANGE → minor bump (0.1.0 → 0.2.0)')
   console.log('')
-  console.log('📖 Подробнее: https://github.com/conventional-changelog/standard-version/issues/539')
   console.log('✅ Рекомендация: используй версии ≥ 1.0.0 для правильного semver')
   console.log('   Обнови: npm pkg set version=1.0.0 && git tag v1.0.0\n')
 }
 
-// 4. Анализ коммитов
+// 4. Commit analysis
 let lastTag = ''
 try {
   lastTag = execSync('git describe --tags --abbrev=0', { encoding: 'utf8' }).trim()
   console.log(`📌 Последний тег: ${lastTag}`)
-} catch (error) {
+} catch {
   console.log('📌 Теги не найдены (первый релиз)')
 }
 
-const commitMessages = lastTag
+const commitLog = lastTag
   ? execSync(`git log ${lastTag}..HEAD --format=%s`, { encoding: 'utf8' })
   : execSync('git log --format=%s -10', { encoding: 'utf8' })
 
-const commits = commitMessages.split('\n').filter(Boolean)
+const commits = commitLog.split('\n').filter(Boolean)
+const countByType = (prefix) => commits.filter((c) => c.startsWith(`${prefix}:`)).length
 
-const featCount = commits.filter((c) => c.startsWith('feat:')).length
-const fixCount = commits.filter((c) => c.startsWith('fix:')).length
-const refactorCount = commits.filter((c) => c.startsWith('refactor:')).length
-const perfCount = commits.filter((c) => c.startsWith('perf:')).length
-const docsCount = commits.filter((c) => c.startsWith('docs:')).length
-const buildCount = commits.filter((c) => c.startsWith('build:')).length
+const featCount = countByType('feat')
+const fixCount = countByType('fix')
+const refactorCount = countByType('refactor')
+const perfCount = countByType('perf')
+const docsCount = countByType('docs')
+const buildCount = countByType('build')
 
 console.log('\n📊 Анализ коммитов:')
-if (featCount > 0) console.log(`   ✨ feat: ${featCount}`)
-if (fixCount > 0) console.log(`   🐛 fix: ${fixCount}`)
-if (refactorCount > 0) console.log(`   ♻️  refactor: ${refactorCount}`)
-if (perfCount > 0) console.log(`   ⚡ perf: ${perfCount}`)
-if (docsCount > 0) console.log(`   📚 docs: ${docsCount}`)
-if (buildCount > 0) console.log(`   🏗️  build: ${buildCount}`)
+if (featCount) console.log(`   ✨ feat: ${featCount}`)
+if (fixCount) console.log(`   🐛 fix: ${fixCount}`)
+if (refactorCount) console.log(`   ♻️  refactor: ${refactorCount}`)
+if (perfCount) console.log(`   ⚡ perf: ${perfCount}`)
+if (docsCount) console.log(`   📚 docs: ${docsCount}`)
+if (buildCount) console.log(`   🏗️  build: ${buildCount}`)
 
-// 5. Определяем bump type
+// 5. Determine bump type
 const isV0 = currentVersion.startsWith('0.')
-let bumpType = 'patch'
+let bumpType
 
 if (isV0) {
-  // Для 0.x.x используем --major чтобы получить minor bump при feat
   bumpType = featCount > 0 ? 'major' : 'patch'
-  console.log(`\n🔢 Bump type: ${bumpType === 'major' ? 'major (для 0.x.x это даст minor)' : 'patch'}`)
+  console.log(`\n🔢 Bump: ${bumpType === 'major' ? 'major (для 0.x.x это даст minor)' : 'patch'}`)
 } else {
-  // Для ≥1.0.0 нормальное поведение
   bumpType = featCount > 0 ? 'minor' : 'patch'
-  console.log(`\n🔢 Bump type: ${bumpType}`)
+  console.log(`\n🔢 Bump: ${bumpType}`)
 }
 
-// 6. Создаём changelog
+// 6. Changelog
 console.log('\n📝 Создание changelog...')
 const changelog = spawnSync(npxCmd, ['changelogen', '--release', `--${bumpType}`], {
   stdio: 'inherit',
@@ -90,7 +108,7 @@ if (changelog.status !== 0) {
   process.exit(1)
 }
 
-// 7. Обновляем README
+// 7. Update README
 console.log('\n📝 Обновление README...')
 const updateReadme = spawnSync('node', [join(__dirname, 'update-readme.js')], { stdio: 'inherit' })
 if (updateReadme.status !== 0) {

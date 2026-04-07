@@ -11,7 +11,6 @@ const args = process.argv.slice(2)
 const command = args[0]
 const commandArgs = args.slice(1)
 
-// Для Windows npx должен быть npx.cmd без shell
 const isWin = platform() === 'win32'
 const npxCmd = isWin ? 'npx.cmd' : 'npx'
 const ghCmd = isWin ? 'gh.exe' : 'gh'
@@ -31,7 +30,6 @@ const commands = {
   },
 
   changelog: () => {
-    // БЕЗ shell: true
     spawnSync(npxCmd, ['changelogen', ...commandArgs], { stdio: 'inherit' })
   },
 
@@ -48,7 +46,6 @@ const commands = {
   },
 
   bugs: () => {
-    // БЕЗ shell: true — убирает warning
     spawnSync(ghCmd, ['issue', 'list', '--label', 'bug', '--state', 'open'], { stdio: 'inherit' })
   },
 
@@ -57,13 +54,11 @@ const commands = {
       spawnSync('node', [join(toolsDir, 'create-bug.js')], { stdio: 'inherit' })
     } else {
       const title = commandArgs.join(' ')
-      // БЕЗ shell: true — теперь пробелы работают!
       spawnSync(ghCmd, ['issue', 'create', '--label', 'bug', '--title', title], { stdio: 'inherit' })
     }
   },
 
   tasks: () => {
-    // БЕЗ shell: true
     spawnSync(ghCmd, ['issue', 'list', '--label', 'task', '--state', 'open'], { stdio: 'inherit' })
   },
 
@@ -72,7 +67,6 @@ const commands = {
       spawnSync('node', [join(toolsDir, 'create-task.js')], { stdio: 'inherit' })
     } else {
       const title = commandArgs.join(' ')
-      // БЕЗ shell: true — теперь пробелы работают!
       spawnSync(ghCmd, ['issue', 'create', '--label', 'task', '--title', title], { stdio: 'inherit' })
     }
   },
@@ -96,12 +90,31 @@ const commands = {
   },
 
   'all-issues': () => {
-    // БЕЗ shell: true
     spawnSync(ghCmd, ['issue', 'list', '--state', 'open'], { stdio: 'inherit' })
   },
+
+  'report-issue': () => {
+    spawnSync('node', [join(toolsDir, 'report-issue.js'), ...commandArgs], { stdio: 'inherit' })
+  },
+
+  'setup-deps': () => {
+    spawnSync('node', [join(toolsDir, 'setup-deps.js')], { stdio: 'inherit' })
+  },
+
+  upgrade: () => {
+    spawnSync('node', [join(toolsDir, 'upgrade.js')], { stdio: 'inherit' })
+  },
+
+  apply: () => {
+    console.log('⚙️  Применение jst.config.js...\n')
+    spawnSync('node', [join(toolsDir, 'setup-labels.js')], { stdio: 'inherit' })
+    spawnSync('node', [join(toolsDir, 'setup-deps.js')], { stdio: 'inherit' })
+    console.log('\n✅ Конфиг применён!')
+  },
+
   'pr-list': () => {
     console.log('📋 Список Pull Requests...\n')
-    spawnSync('gh', ['pr', 'list'], { stdio: 'inherit' })
+    spawnSync(ghCmd, ['pr', 'list'], { stdio: 'inherit' })
   },
 
   'pr-view': () => {
@@ -111,7 +124,7 @@ const commands = {
       process.exit(1)
     }
     console.log(`👀 Просмотр PR #${prNumber}...\n`)
-    spawnSync('gh', ['pr', 'view', prNumber], { stdio: 'inherit' })
+    spawnSync(ghCmd, ['pr', 'view', prNumber], { stdio: 'inherit' })
   },
 
   'pr-view-web': () => {
@@ -121,7 +134,7 @@ const commands = {
       process.exit(1)
     }
     console.log(`🌐 Открываю PR #${prNumber} в браузере...`)
-    spawnSync('gh', ['pr', 'view', prNumber, '--web'], { stdio: 'inherit' })
+    spawnSync(ghCmd, ['pr', 'view', prNumber, '--web'], { stdio: 'inherit' })
   },
 
   'pr-merge': () => {
@@ -131,7 +144,7 @@ const commands = {
       process.exit(1)
     }
     console.log(`🔀 Мерджу PR #${prNumber}...\n`)
-    spawnSync('gh', ['pr', 'merge', prNumber, '--merge'], { stdio: 'inherit' })
+    spawnSync(ghCmd, ['pr', 'merge', prNumber, '--merge'], { stdio: 'inherit' })
     console.log('\n✅ PR смерджен!')
   },
 
@@ -142,7 +155,7 @@ const commands = {
       process.exit(1)
     }
     console.log(`❌ Закрываю PR #${prNumber}...\n`)
-    spawnSync('gh', ['pr', 'close', prNumber], { stdio: 'inherit' })
+    spawnSync(ghCmd, ['pr', 'close', prNumber], { stdio: 'inherit' })
     console.log('\n✅ PR закрыт!')
   },
 }
@@ -156,16 +169,19 @@ if (commands[command]) {
 Использование: npm run _ <команда> [аргументы]
 
 📋 ПРОЕКТ:
-  init                      Инициализация проекта
+  init                      Инициализация нового проекта
+  upgrade                   Обновить конфиги после npm update
+  apply                     Применить изменения из jst.config.js
   init-readme               Создать стартовый README.md
   setup-labels              Настроить GitHub labels
+  setup-deps                Настроить dependabot/renovate
 
 🔧 РАЗРАБОТКА:
   update-readme             Обновить README с версией
-  release                   Полный релиз (проверка + changelog + README)
+  release                   Полный релиз (changelog + README)
   push-release              Создать PR и смерджить в main
 
-📝 ISSUES:
+📝 ISSUES (текущий проект):
   tasks                        Список задач (фичи)
   create-task [название]       Создать задачу
   bugs                         Список багов
@@ -176,6 +192,9 @@ if (commands[command]) {
   create-perf [название]       Создать оптимизацию
   all-issues                   Все issues
 
+📮 ISSUES (jst инструмент):
+  report-issue [описание]   Сообщить о проблеме в js-template
+
 🔀 PULL REQUESTS:
   pr-list                   Показать все PR
   pr-view <number>          Посмотреть PR в терминале
@@ -183,13 +202,25 @@ if (commands[command]) {
   pr-merge <number>         Смерджить PR
   pr-close <number>         Закрыть PR без merge
 
+⚙️  КОНФИГУРАЦИЯ:
+  jst.config.js             Настройки веток, labels, коммитов, релизов
+
+📝 ФОРМАТ КОММИТОВ:
+  feat: #9 описание               Фича (ссылка на issue)
+  feat(scope): #9 описание        Фича со scope
+  feat: close #9 описание         Фича + закрыть issue
+  fix: #10 описание               Фикс (ссылка на issue)
+  fix(scope): close #10 описание  Фикс + scope + закрыть
+  refactor: описание              Рефакторинг (без issue)
+  refactor(utils): описание       Рефакторинг со scope
+  chore(release): v1.2.0          Авто-релиз
+
 📚 ПРИМЕРЫ:
   npm run _ init
-  npm run _ init-readme
-  npm run _ feat "Добавить темную тему"
+  npm run _ create-task "Добавить темную тему"
   npm run _ release
+  npm run _ report-issue "Баг в release команде"
   npm run _ pr-list
-  npm run _ pr-merge 5
 
   `)
   process.exit(command ? 1 : 0)

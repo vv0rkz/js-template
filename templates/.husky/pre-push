@@ -1,17 +1,3 @@
 #!/usr/bin/env sh
 
-CURRENT_BRANCH=$(git branch --show-current)
-if [ "$CURRENT_BRANCH" = "main" ]; then
-    echo "✅ Разрешённая ветка: $CURRENT_BRANCH"
-    exit 0
-fi
-
-# Простая проверка: начинается с v и есть дефис
-if ! echo "$CURRENT_BRANCH" | grep -q "^v.*-.*"; then
-    echo "❌ Неправильный формат ветки: $CURRENT_BRANCH"
-    echo "✅ Должен быть: vX.Y.Z-description"
-    echo "📝 Пример: v2.3.0-normalize-operators"
-    exit 1
-fi
-
-echo "✅ Формат ветки правильный: $CURRENT_BRANCH"
+node ./node_modules/@vv0rkz/js-template/tools-gh/validate-branch.js

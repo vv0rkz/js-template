@@ -57,6 +57,7 @@ const filesToCopy = [
   { src: 'gitignore', dest: '.gitignore' },
   { src: 'changelog.config.js', dest: 'changelog.config.js' },
   { src: 'commitlint.config.js', dest: 'commitlint.config.js' },
+  { src: 'jst.config.js', dest: 'jst.config.js' },
 ]
 
 for (const file of filesToCopy) {
@@ -192,13 +193,20 @@ try {
   console.log('     Запусти позже: npm run _ setup-labels')
 }
 
-// 8. Инициализация README
+// 8. Настройка автообновления зависимостей
+console.log('\n📦 Настройка автообновления зависимостей...')
+const setupDeps = spawnSync('node', [join(toolsDir, 'setup-deps.js')], { stdio: 'inherit' })
+if (setupDeps.status !== 0) {
+  console.log('  ⏭️  Пропущено (измени depUpdater в jst.config.js)')
+}
+
+// 9. Инициализация README
 console.log('\n📝 Инициализация README...')
 const initReadme = spawnSync('node', [join(toolsDir, 'init-readme.js')], { stdio: 'inherit' })
 if (initReadme.status === 0) {
   console.log('  ✅ README.md создан')
 }
-// 9. Проверка на версию
+// 10. Проверка на версию
 const packageJson = JSON.parse(readFileSync('package.json', 'utf8'))
 
 // Проверка версии

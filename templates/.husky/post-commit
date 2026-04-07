@@ -1,25 +1,3 @@
 #!/usr/bin/env sh
 
-COMMIT_MSG=$(git log -1 --pretty=%B)
-COMMIT_HASH=$(git rev-parse --short HEAD)
-REPO_URL=$(git remote get-url origin)
-
-# Исправляем URL
-if echo "$REPO_URL" | grep -q "git@github.com"; then
-    REPO_URL=$(echo "$REPO_URL" | sed 's/git@github.com:/https:\/\/github.com\//' | sed 's/\.git$//')
-else
-    REPO_URL=$(echo "$REPO_URL" | sed 's/\.git$//')
-fi
-
-# Пуш коммита
-git push origin HEAD
-
-# Закрытие issues при feat: #номер И fix: #номер
-if echo "$COMMIT_MSG" | grep -q "^\(feat\|fix\): #[0-9]"; then
-    ISSUE_NUMBER=$(echo "$COMMIT_MSG" | grep -o '#[0-9]*' | sed 's/#//')
-    echo "🔧 Закрываю issue #$ISSUE_NUMBER..."
-    
-    COMMIT_LINK="$REPO_URL/commit/$COMMIT_HASH"
-    
-    gh issue close "$ISSUE_NUMBER" --comment "✅ Завершено в коммите: [$COMMIT_HASH]($COMMIT_LINK) - $COMMIT_MSG"
-fi
+node ./node_modules/@vv0rkz/js-template/tools-gh/post-commit-hook.js
