@@ -22,7 +22,7 @@ if (!currentVersion) {
 console.log(`📦 Текущая версия: ${currentVersion}`)
 
 // 2. Demo check (configurable)
-if (config.release.requireDemo) {
+if (config.release.demo.enable) {
   const [major, minor, patch] = currentVersion.split('.').map(Number)
   const recentCommits = execSync('git log --oneline -10', { encoding: 'utf8' })
   const nextVersion = recentCommits.includes('feat:')
@@ -31,7 +31,7 @@ if (config.release.requireDemo) {
 
   console.log(`📦 Предполагаемая следующая версия: ${nextVersion}`)
 
-  const { demoDir, demoFormats } = config.release
+  const { dir: demoDir, formats: demoFormats } = config.release.demo
   const hasDemo = demoFormats.some((fmt) => existsSync(`${demoDir}/${nextVersion}.${fmt}`))
 
   if (!hasDemo) {
@@ -42,7 +42,7 @@ if (config.release.requireDemo) {
 
   console.log(`✅ Демо для ${nextVersion} готово!`)
 } else {
-  console.log('⏭️  Проверка демо отключена (release.requireDemo = false)')
+  console.log('⏭️  Проверка демо отключена (release.demo.enable = false)')
 }
 
 // 3. Warning for 0.x.x

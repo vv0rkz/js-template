@@ -19,9 +19,12 @@ const DEFAULTS = {
     closeKeyword: 'close',
   },
   release: {
-    requireDemo: true,
-    demoDir: 'docs',
-    demoFormats: ['gif', 'png'],
+    demo: {
+      enable: true,
+      dir: 'docs',
+      formats: ['gif', 'png'],
+      style: 'click',
+    },
   },
   changelog: {
     types: {

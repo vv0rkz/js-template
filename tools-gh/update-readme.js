@@ -1,14 +1,14 @@
 #!/usr/bin/env node
-import { execSync, spawnSync } from 'child_process'
+import { execSync } from 'child_process'
 import { existsSync, readFileSync, writeFileSync } from 'fs'
+import sharp from 'sharp'
 import { loadConfig } from './config.js'
 
 const config = await loadConfig()
-const demoDir = config.release.demoDir
+const { dir: demoDir, style: demoStyle } = config.release.demo
 
 console.log('🎨 Обновляю README релизами с демо...')
 
-// Проверяем наличие файлов
 if (!existsSync('CHANGELOG.md')) {
   console.log('❌ CHANGELOG.md не найден')
   console.log('💡 Сначала запусти: npm run _ changelog')
@@ -23,46 +23,70 @@ if (!existsSync('README.md')) {
 const changelog = readFileSync('CHANGELOG.md', 'utf8')
 let readme = readFileSync('README.md', 'utf8')
 
-// Получаем информацию о репозитории
+// Получаем URL репозитория
 let repoUrl
 try {
   const remoteUrl = execSync('git config --get remote.origin.url').toString().trim()
   if (remoteUrl.includes('github.com')) {
     repoUrl = remoteUrl.replace('git@github.com:', 'https://github.com/').replace('.git', '')
   }
-} catch (error) {
+} catch {
   console.log('⚠️  Не удалось определить URL репозитория')
 }
 
 /**
- * Пытается извлечь первый кадр GIF в PNG через ffmpeg.
- * Возвращает true если PNG был создан, false если ffmpeg недоступен или ошибка.
+ * Извлекает первый кадр GIF в PNG через sharp.
+ * Возвращает true если PNG создан успешно.
  */
-function tryGeneratePng(gifPath, pngPath) {
-  const result = spawnSync('ffmpeg', ['-i', gifPath, '-frames:v', '1', pngPath, '-y'], {
-    encoding: 'utf8',
-  })
-  if (result.status === 0 && existsSync(pngPath)) {
+async function tryGeneratePng(gifPath, pngPath) {
+  try {
+    await sharp(gifPath).png().toFile(pngPath)
     console.log(`🖼️  PNG превью создан: ${pngPath}`)
     return true
+  } catch {
+    return false
   }
-  return false
 }
 
-// Парсим changelog - ТОЛЬКО версии с демо
+/**
+ * Генерирует HTML блок демо в зависимости от demoStyle.
+ */
+function renderDemo(version, gifPath, pngPath, hasGif, hasPng) {
+  if (demoStyle === 'side-by-side') {
+    let html = ''
+    if (hasPng) html += `<img src="${pngPath}" alt="${version} demo preview" width="400" />`
+    if (hasGif) html += `<img src="${gifPath}" alt="${version} demo animation" width="400" />`
+    return `**Демо работы**  \n${html}\n\n`
+  }
+
+  // 'click' (default) — PNG превью, клик открывает GIF
+  if (hasGif && hasPng) {
+    return (
+      `**Демо работы**  \n` +
+      `<a href="${gifPath}"><img src="${pngPath}" alt="${version} demo preview" width="400" /></a>\n\n` +
+      `*${version} — нажми на превью чтобы увидеть анимацию*\n\n`
+    )
+  }
+  if (hasPng) {
+    return `**Демо работы**  \n<img src="${pngPath}" alt="${version} demo preview" width="400" />\n\n`
+  }
+  return `**Демо работы**  \n<img src="${gifPath}" alt="${version} demo" width="400" />\n\n`
+}
+
+// Парсим changelog — только версии с демо
 const versionBlocks = changelog.split('## v').slice(1)
 let prettyChangelog = '## 📋 История версий\n\n'
 const processedVersions = new Set()
 
-versionBlocks.forEach((versionBlock) => {
+for (const versionBlock of versionBlocks) {
   // Поддержка заголовков вида "v1.4.0...v2.0.0" (changelogen диапазон) и обычных "v2.0.0"
   const rangeMatch = versionBlock.match(/^\d+\.\d+\.\d+\.\.\.v(\d+\.\d+\.\d+)/)
   const simpleMatch = versionBlock.match(/^(\d+\.\d+\.\d+)/)
   const versionMatch = rangeMatch || simpleMatch
-  if (!versionMatch) return
+  if (!versionMatch) continue
 
   const version = `v${versionMatch[1]}`
-  if (processedVersions.has(version)) return
+  if (processedVersions.has(version)) continue
   processedVersions.add(version)
 
   const gifPath = `${demoDir}/${version}.gif`
@@ -71,25 +95,25 @@ versionBlocks.forEach((versionBlock) => {
   const hasGif = existsSync(gifPath)
   let hasPng = existsSync(pngPath)
 
-  // Если есть GIF но нет PNG — пытаемся сгенерировать PNG через ffmpeg
+  // Если есть GIF но нет PNG — пытаемся сгенерировать PNG через sharp
   if (hasGif && !hasPng) {
-    hasPng = tryGeneratePng(gifPath, pngPath)
+    hasPng = await tryGeneratePng(gifPath, pngPath)
   }
 
   const hasDemo = hasGif || hasPng
   if (!hasDemo) {
     console.log(`⏭️  Пропускаем ${version} - нет демо`)
-    return
+    continue
   }
 
-  // Пропускаем если нет фич (поддержка разных форматов заголовков)
+  // Пропускаем если нет фич
   if (
     !versionBlock.includes('### ✨ Новые фичи') &&
     !versionBlock.includes('### ✨ Фичи') &&
     !versionBlock.includes('### 🚀')
   ) {
     console.log(`⏭️  Пропускаем ${version} - нет фич`)
-    return
+    continue
   }
 
   // Извлекаем фичи
@@ -98,7 +122,6 @@ versionBlocks.forEach((versionBlock) => {
   let inFeaturesSection = false
 
   for (const line of lines) {
-    // Поддержка разных форматов заголовков фич
     if (line.includes('### ✨ Новые фичи') || line.includes('### ✨ Фичи') || line.includes('### 🚀')) {
       inFeaturesSection = true
       continue
@@ -119,38 +142,24 @@ versionBlocks.forEach((versionBlock) => {
     }
   }
 
-  if (features.length === 0) return
+  if (features.length === 0) continue
 
   console.log(`✅ Добавляем ${version} - есть демо и ${features.length} фич`)
 
-  // Форматируем версию
   prettyChangelog += `### 🟢 ${version}\n\n`
+  prettyChangelog += renderDemo(version, gifPath, pngPath, hasGif, hasPng)
 
-  // Добавляем демо
-  // Если есть GIF + PNG → кликабельный превью (быстрая загрузка + анимация по клику)
-  // Если только PNG → обычный img
-  // Если только GIF → обычный img с GIF
-  if (hasGif && hasPng) {
-    prettyChangelog += `**Демо работы**  \n<a href="${gifPath}" title="Нажми чтобы увидеть анимацию"><img src="${pngPath}" width="400" /></a>\n\n`
-  } else if (hasPng) {
-    prettyChangelog += `**Демо работы**  \n<img src="${pngPath}" width="400" />\n\n`
-  } else {
-    prettyChangelog += `**Демо работы**  \n<img src="${gifPath}" width="400" />\n\n`
-  }
-
-  // Добавляем функционал
   prettyChangelog += `**Функционал:**\n`
   features.forEach((feature) => {
     prettyChangelog += `- ${feature}\n`
   })
 
-  // Добавляем ссылку на релиз (если есть URL репозитория)
   if (repoUrl) {
     prettyChangelog += `\n**Релиз:** ${repoUrl}/releases/tag/${version}\n\n`
   }
 
   prettyChangelog += `---\n\n`
-})
+}
 
 // Заменяем секцию между маркерами
 if (readme.includes('<!-- AUTOGENERATED_SECTION START -->')) {
@@ -172,7 +181,6 @@ if (readme.includes('<!-- AUTOGENERATED_SECTION START -->')) {
   process.exit(1)
 }
 
-// Сохраняем
 writeFileSync('README.md', readme)
 console.log('✅ README обновлён с релизами, у которых есть демо!')
 
@@ -187,6 +195,6 @@ try {
   } else {
     console.log('💡 README не изменился')
   }
-} catch (error) {
+} catch {
   console.log('💡 README обновлён локально (не удалось запушить автоматически)')
 }
