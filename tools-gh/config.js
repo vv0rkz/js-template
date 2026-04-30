@@ -101,6 +101,35 @@ function deepMerge(target, source) {
 }
 
 /**
+ * Checks for deprecated config keys and prints migration warnings.
+ * Old flat release.* keys were moved to release.demo.* in v1.9.0.
+ */
+function warnDeprecatedKeys(userConfig) {
+  const deprecated = [
+    { old: 'release.requireDemo', newKey: 'release.demo.enable' },
+    { old: 'release.demoDir',     newKey: 'release.demo.dir' },
+    { old: 'release.demoFormats', newKey: 'release.demo.formats' },
+  ]
+
+  const found = deprecated.filter(({ old }) => {
+    const [top, key] = old.split('.')
+    return userConfig[top]?.[key] !== undefined
+  })
+
+  if (found.length === 0) return
+
+  console.warn('\n⚠️  jst.config.js: устаревшие настройки (обнови конфиг)\n')
+  found.forEach(({ old, newKey }) => {
+    console.warn(`   ${old}  →  ${newKey}`)
+  })
+  console.warn('\n   Было:')
+  console.warn('     release: { requireDemo, demoDir, demoFormats }')
+  console.warn('\n   Стало (начиная с v1.9.0):')
+  console.warn('     release: { demo: { enable, dir, formats, style } }')
+  console.warn('\n   Запусти: npm run _ upgrade  — чтобы получить актуальный конфиг\n')
+}
+
+/**
  * Loads config from jst.config.js (preferred) or jst.config.json (fallback)
  * Deep-merges user config with defaults
  */
@@ -123,6 +152,8 @@ export async function loadConfig() {
       console.warn('⚠️  Ошибка чтения jst.config.json:', e.message)
     }
   }
+
+  warnDeprecatedKeys(userConfig)
 
   return deepMerge(DEFAULTS, userConfig)
 }

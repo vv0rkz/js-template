@@ -52,16 +52,16 @@ export default {
 
   // Релиз
   release: {
-    requireDemo: true,               // требовать GIF/PNG перед релизом
-    demoDir: 'docs',                 // где искать демо
-    demoFormats: ['gif', 'png'],
+    demo: {
+      enable: true,                  // требовать демо перед релизом
+      dir: 'docs',                   // где искать демо-файлы
+      formats: ['gif', 'png'],       // допустимые форматы
+      style: 'click',                // 'click' | 'side-by-side'
+    },
   },
 
   // Автообновление зависимостей
   depUpdater: false,                 // 'dependabot' | 'renovate' | false
-
-  // Репозиторий JST для report-issue
-  jstRepo: 'vv0rkz/js-template',
 }
 ```
 
@@ -218,6 +218,33 @@ npm run _ push-release
 - [Commitlint](https://commitlint.js.org/) — Проверка коммитов
 - [Changelogen](https://github.com/unjs/changelogen) — Генерация changelog
 - [GitHub CLI](https://cli.github.com/) — Управление issues
+
+## Migration Guide
+
+### v1.9.0 — `release.demo` (breaking change)
+
+Настройки демо переехали из плоского `release.*` в объект `release.demo`:
+
+```js
+// ❌ Было (до v1.9.0)
+release: {
+  requireDemo: true,
+  demoDir: 'docs',
+  demoFormats: ['gif', 'png'],
+}
+
+// ✅ Стало
+release: {
+  demo: {
+    enable: true,
+    dir: 'docs',
+    formats: ['gif', 'png'],
+    style: 'click',   // новая опция: 'click' | 'side-by-side'
+  },
+}
+```
+
+Если в `jst.config.js` остались старые ключи, при запуске любой `jst`-команды появится предупреждение с инструкцией по миграции.
 
 ## Лицензия
 
