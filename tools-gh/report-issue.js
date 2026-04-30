@@ -1,10 +1,8 @@
 #!/usr/bin/env node
 import { spawnSync } from 'child_process'
 import { platform } from 'os'
-import { loadConfig } from './config.js'
 
-const config = await loadConfig()
-const jstRepo = config.jstRepo
+const jstRepo = 'vv0rkz/js-template'
 const isWin = platform() === 'win32'
 const ghCmd = isWin ? 'gh.exe' : 'gh'
 

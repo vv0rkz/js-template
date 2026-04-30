@@ -1,6 +1,10 @@
 #!/usr/bin/env node
-import { execSync } from 'child_process'
+import { execSync, spawnSync } from 'child_process'
 import { existsSync, readFileSync, writeFileSync } from 'fs'
+import { loadConfig } from './config.js'
+
+const config = await loadConfig()
+const demoDir = config.release.demoDir
 
 console.log('🎨 Обновляю README релизами с демо...')
 
@@ -30,21 +34,49 @@ try {
   console.log('⚠️  Не удалось определить URL репозитория')
 }
 
+/**
+ * Пытается извлечь первый кадр GIF в PNG через ffmpeg.
+ * Возвращает true если PNG был создан, false если ffmpeg недоступен или ошибка.
+ */
+function tryGeneratePng(gifPath, pngPath) {
+  const result = spawnSync('ffmpeg', ['-i', gifPath, '-frames:v', '1', pngPath, '-y'], {
+    encoding: 'utf8',
+  })
+  if (result.status === 0 && existsSync(pngPath)) {
+    console.log(`🖼️  PNG превью создан: ${pngPath}`)
+    return true
+  }
+  return false
+}
+
 // Парсим changelog - ТОЛЬКО версии с демо
 const versionBlocks = changelog.split('## v').slice(1)
 let prettyChangelog = '## 📋 История версий\n\n'
 const processedVersions = new Set()
 
 versionBlocks.forEach((versionBlock) => {
-  const versionMatch = versionBlock.match(/^(\d+\.\d+\.\d+)/)
+  // Поддержка заголовков вида "v1.4.0...v2.0.0" (changelogen диапазон) и обычных "v2.0.0"
+  const rangeMatch = versionBlock.match(/^\d+\.\d+\.\d+\.\.\.v(\d+\.\d+\.\d+)/)
+  const simpleMatch = versionBlock.match(/^(\d+\.\d+\.\d+)/)
+  const versionMatch = rangeMatch || simpleMatch
   if (!versionMatch) return
 
   const version = `v${versionMatch[1]}`
   if (processedVersions.has(version)) return
   processedVersions.add(version)
 
-  // ПРОВЕРЯЕМ ДЕМО - если нет демо, пропускаем
-  const hasDemo = existsSync(`docs/${version}.gif`) || existsSync(`docs/${version}.png`)
+  const gifPath = `${demoDir}/${version}.gif`
+  const pngPath = `${demoDir}/${version}.png`
+
+  const hasGif = existsSync(gifPath)
+  let hasPng = existsSync(pngPath)
+
+  // Если есть GIF но нет PNG — пытаемся сгенерировать PNG через ffmpeg
+  if (hasGif && !hasPng) {
+    hasPng = tryGeneratePng(gifPath, pngPath)
+  }
+
+  const hasDemo = hasGif || hasPng
   if (!hasDemo) {
     console.log(`⏭️  Пропускаем ${version} - нет демо`)
     return
@@ -94,11 +126,16 @@ versionBlocks.forEach((versionBlock) => {
   // Форматируем версию
   prettyChangelog += `### 🟢 ${version}\n\n`
 
-  // Добавляем демо (гарантированно есть)
-  if (existsSync(`docs/${version}.gif`)) {
-    prettyChangelog += `**Демо работы**  \n<img src="docs/${version}.gif" width="400" />\n\n`
+  // Добавляем демо
+  // Если есть GIF + PNG → кликабельный превью (быстрая загрузка + анимация по клику)
+  // Если только PNG → обычный img
+  // Если только GIF → обычный img с GIF
+  if (hasGif && hasPng) {
+    prettyChangelog += `**Демо работы**  \n<a href="${gifPath}" title="Нажми чтобы увидеть анимацию"><img src="${pngPath}" width="400" /></a>\n\n`
+  } else if (hasPng) {
+    prettyChangelog += `**Демо работы**  \n<img src="${pngPath}" width="400" />\n\n`
   } else {
-    prettyChangelog += `**Демо работы**  \n<img src="docs/${version}.png" width="400" />\n\n`
+    prettyChangelog += `**Демо работы**  \n<img src="${gifPath}" width="400" />\n\n`
   }
 
   // Добавляем функционал

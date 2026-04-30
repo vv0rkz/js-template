@@ -32,7 +32,6 @@ const DEFAULTS = {
     },
   },
   depUpdater: false,
-  jstRepo: 'vv0rkz/js-template',
 }
 
 // --- Branch pattern template engine ---

@@ -117,9 +117,4 @@ export default {
    */
   depUpdater: false,
 
-  /**
-   * Репозиторий JST для команды `report-issue`
-   * Формат: 'owner/repo'
-   */
-  jstRepo: 'vv0rkz/js-template',
 }

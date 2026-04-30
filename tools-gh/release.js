@@ -15,6 +15,10 @@ console.log('🚀 Запуск релиза...\n')
 
 // 1. Current version
 const currentVersion = JSON.parse(readFileSync('package.json', 'utf8')).version
+if (!currentVersion) {
+  console.log('❌ Нет поля version в package.json. Добавь: "version": "X.Y.Z"')
+  process.exit(1)
+}
 console.log(`📦 Текущая версия: ${currentVersion}`)
 
 // 2. Demo check (configurable)
