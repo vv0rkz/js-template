@@ -103,6 +103,23 @@ export default {
        */
       style: 'click',
     },
+
+    /**
+     * Release audit — пассивная проверка перед каждой jst-командой.
+     * Сравнивает git tags ↔ GitHub Releases ↔ демо-файлы ↔ README-секции
+     * и печатает предупреждения, не блокируя команду.
+     *
+     *   enable    — включить хук (true | false)
+     *   warnOnly  — только предупреждать (true) или падать с кодом 1 (false)
+     *
+     * Отключить разово: `jst --no-audit <command>`
+     * Запустить явно:  `jst audit`
+     * Починить пропуски: `jst fix-releases`
+     */
+    audit: {
+      enable: true,
+      warnOnly: true,
+    },
   },
 
   /**

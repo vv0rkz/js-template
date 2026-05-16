@@ -58,6 +58,12 @@ export default {
       formats: ['gif', 'png'],       // допустимые форматы
       style: 'click',                // 'click' | 'side-by-side'
     },
+    // Pre-run хук: перед каждой jst-командой сравнивает теги ↔ Releases ↔
+    // демо ↔ README и выводит предупреждения (не блокирует команду).
+    audit: {
+      enable: true,
+      warnOnly: true,
+    },
   },
 
   // Автообновление зависимостей
@@ -115,6 +121,10 @@ npx jst <команда>       # напрямую
 | `setup-deps` | Настроить dependabot/renovate (+ auto-merge workflow) |
 | `setup-ci` | Сгенерировать `.github/workflows/ci.yml` |
 | `setup-branch-protection` | Настроить защиту главной ветки через `gh api` |
+| `audit` | Проверить теги/Releases/демо/README на пробелы |
+| `fix-releases` | Создать GitHub Release для тегов без Release |
+
+> Audit запускается автоматически перед каждой `jst`-командой (кроме `init`, `upgrade`, `audit`, `fix-releases`). Отключить разово — флагом `--no-audit`: `jst --no-audit create-task "..."`. Полностью — в `jst.config.js`: `release.audit.enable = false`.
 
 ### Разработка
 

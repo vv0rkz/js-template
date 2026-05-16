@@ -25,6 +25,10 @@ const DEFAULTS = {
       formats: ['gif', 'png'],
       style: 'click',
     },
+    audit: {
+      enable: true,
+      warnOnly: true,
+    },
   },
   changelog: {
     types: {

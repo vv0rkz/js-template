@@ -7,6 +7,13 @@ import { fileURLToPath } from 'url'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const toolsDir = join(__dirname, '../tools-gh')
 
+// Strip the global `--no-audit` flag from argv before anyone else looks at it,
+// so downstream command handlers (some of which read process.argv directly)
+// don't see it as a positional argument.
+const noAuditIndex = process.argv.indexOf('--no-audit')
+const noAudit = noAuditIndex !== -1
+if (noAudit) process.argv.splice(noAuditIndex, 1)
+
 const args = process.argv.slice(2)
 const command = args[0]
 const commandArgs = args.slice(1)
@@ -14,6 +21,16 @@ const commandArgs = args.slice(1)
 const isWin = platform() === 'win32'
 const npxCmd = isWin ? 'npx.cmd' : 'npx'
 const ghCmd = isWin ? 'gh.exe' : 'gh'
+
+// Commands that should NOT trigger the release audit pre-run hook.
+// `init` runs before tags exist; `audit` / `fix-releases` ARE the audit
+// itself; `upgrade` runs right after `npm update` and may pre-date tags.
+const SKIP_AUDIT = new Set(['audit', 'fix-releases', 'init', 'upgrade', undefined])
+
+function maybeRunAudit() {
+  if (noAudit || SKIP_AUDIT.has(command)) return
+  spawnSync('node', [join(toolsDir, 'release-audit.js'), '--quiet-if-clean'], { stdio: 'inherit' })
+}
 
 const commands = {
   init: () => {
@@ -109,6 +126,14 @@ const commands = {
     spawnSync('node', [join(toolsDir, 'setup-branch-protection.js')], { stdio: 'inherit' })
   },
 
+  audit: () => {
+    spawnSync('node', [join(toolsDir, 'release-audit.js')], { stdio: 'inherit' })
+  },
+
+  'fix-releases': () => {
+    spawnSync('node', [join(toolsDir, 'fix-releases.js')], { stdio: 'inherit' })
+  },
+
   upgrade: () => {
     spawnSync('node', [join(toolsDir, 'upgrade.js')], { stdio: 'inherit' })
   },
@@ -172,6 +197,7 @@ const commands = {
 }
 
 if (commands[command]) {
+  maybeRunAudit()
   commands[command]()
 } else {
   console.log(`
@@ -188,6 +214,8 @@ if (commands[command]) {
   setup-deps                Настроить dependabot/renovate
   setup-ci                  Сгенерировать .github/workflows/ci.yml
   setup-branch-protection   Настроить защиту главной ветки (gh api)
+  audit                     Проверить теги/Releases/демо/README на пробелы
+  fix-releases              Создать GitHub Release для тегов без Release
 
 🔧 РАЗРАБОТКА:
   update-readme             Обновить README с версией
@@ -217,6 +245,9 @@ if (commands[command]) {
 
 ⚙️  КОНФИГУРАЦИЯ:
   jst.config.js             Настройки веток, labels, коммитов, релизов
+
+🚩 ГЛОБАЛЬНЫЕ ФЛАГИ:
+  --no-audit                Отключить release audit для этого запуска
 
 📝 ФОРМАТ КОММИТОВ:
   feat: #9 описание               Фича (ссылка на issue)
