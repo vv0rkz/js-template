@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.10.0
+
+[compare changes](https://github.com/vv0rkz/js-template/compare/v1.9.0...v1.10.0)
+
+### 🚀 Enhancements
+
+- Close #12 ambient release audit + fix-releases command ([#12](https://github.com/vv0rkz/js-template/issues/12))
+
+### ❤️ Contributors
+
+- Get <ivanchebykin4@gmail.com>
+
 ## v1.9.0
 
 [compare changes](https://github.com/vv0rkz/js-template/compare/v1.8.4...v1.9.0)
