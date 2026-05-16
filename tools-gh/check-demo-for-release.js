@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { existsSync, readFileSync } from 'fs'
-import { execSync } from 'child_process'
 import { loadConfig } from './config.js'
+import { predictNextVersion } from './version-utils.js'
 
 const config = await loadConfig()
 
@@ -11,16 +11,7 @@ if (!config.release.demo.enable) {
 }
 
 const packageJson = JSON.parse(readFileSync('package.json', 'utf8'))
-const [major, minor, patch] = packageJson.version.split('.').map(Number)
-
-const commitMessages = execSync('git log --oneline -10', { encoding: 'utf8' })
-
-let nextVersion
-if (commitMessages.includes('feat:')) {
-  nextVersion = `v${major}.${minor + 1}.0`
-} else {
-  nextVersion = `v${major}.${minor}.${patch + 1}`
-}
+const nextVersion = predictNextVersion(packageJson.version)
 
 console.log(`📦 Предполагаемая следующая версия: ${nextVersion}`)
 

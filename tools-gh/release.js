@@ -1,10 +1,11 @@
 #!/usr/bin/env node
-import { execSync, spawnSync } from 'child_process'
+import { spawnSync } from 'child_process'
 import { existsSync, readFileSync } from 'fs'
 import { platform } from 'os'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
 import { loadConfig } from './config.js'
+import { getCommitsSinceLastTag, getLastTag, predictNextVersion } from './version-utils.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const isWin = platform() === 'win32'
@@ -23,12 +24,7 @@ console.log(`📦 Текущая версия: ${currentVersion}`)
 
 // 2. Demo check (configurable)
 if (config.release.demo.enable) {
-  const [major, minor, patch] = currentVersion.split('.').map(Number)
-  const recentCommits = execSync('git log --oneline -10', { encoding: 'utf8' })
-  const nextVersion = recentCommits.includes('feat:')
-    ? `v${major}.${minor + 1}.0`
-    : `v${major}.${minor}.${patch + 1}`
-
+  const nextVersion = predictNextVersion(currentVersion)
   console.log(`📦 Предполагаемая следующая версия: ${nextVersion}`)
 
   const { dir: demoDir, formats: demoFormats } = config.release.demo
@@ -58,19 +54,11 @@ if (currentVersion.startsWith('0.')) {
 }
 
 // 4. Commit analysis
-let lastTag = ''
-try {
-  lastTag = execSync('git describe --tags --abbrev=0', { encoding: 'utf8' }).trim()
-  console.log(`📌 Последний тег: ${lastTag}`)
-} catch {
-  console.log('📌 Теги не найдены (первый релиз)')
-}
+const lastTag = getLastTag()
+if (lastTag) console.log(`📌 Последний тег: ${lastTag}`)
+else console.log('📌 Теги не найдены (первый релиз)')
 
-const commitLog = lastTag
-  ? execSync(`git log ${lastTag}..HEAD --format=%s`, { encoding: 'utf8' })
-  : execSync('git log --format=%s -10', { encoding: 'utf8' })
-
-const commits = commitLog.split('\n').filter(Boolean)
+const commits = getCommitsSinceLastTag(lastTag)
 const countByType = (prefix) => commits.filter((c) => c.startsWith(`${prefix}:`)).length
 
 const featCount = countByType('feat')
