@@ -61,7 +61,24 @@ export default {
   },
 
   // Автообновление зависимостей
-  depUpdater: false,                 // 'dependabot' | 'renovate' | false
+  // Короткая форма: 'dependabot' | 'renovate' | false
+  // Расширенная (только dependabot):
+  //   { type: 'dependabot', ignoreMajor: true, autoMerge: { patch: true, minor: true } }
+  depUpdater: false,
+
+  // CI workflow (.github/workflows/ci.yml)
+  ci: {
+    enable: false,                   // включить генерацию ci.yml
+    checks: ['lint', 'test'],        // имена job-ов = имена npm-скриптов
+    nodeVersion: '20',
+  },
+
+  // Branch protection (через gh api)
+  branchProtection: {
+    enable: false,
+    requiredChecks: [],              // должны совпадать с ci.checks
+    enforceAdmins: false,
+  },
 }
 ```
 
@@ -74,8 +91,10 @@ export default {
 | `release.*` | На следующем `jst release` |
 | `labels` | После `jst setup-labels` или `jst apply` |
 | `depUpdater` | После `jst setup-deps` или `jst apply` |
+| `ci.*` | После `jst setup-ci` или `jst apply` |
+| `branchProtection.*` | После `jst setup-branch-protection` (вручную) |
 
-Короткий путь — `jst apply` применит labels + deps за раз.
+Короткий путь — `jst apply` применит labels + deps + ci за раз. Branch protection требует admin-прав и запускается отдельно.
 
 ## Команды
 
@@ -91,9 +110,11 @@ npx jst <команда>       # напрямую
 |---|---|
 | `init` | Инициализация нового проекта |
 | `upgrade` | Обновить конфиги после `npm update` |
-| `apply` | Применить изменения из `jst.config.js` |
+| `apply` | Применить изменения из `jst.config.js` (labels + deps + ci) |
 | `setup-labels` | Настроить GitHub labels |
-| `setup-deps` | Настроить dependabot/renovate |
+| `setup-deps` | Настроить dependabot/renovate (+ auto-merge workflow) |
+| `setup-ci` | Сгенерировать `.github/workflows/ci.yml` |
+| `setup-branch-protection` | Настроить защиту главной ветки через `gh api` |
 
 ### Разработка
 

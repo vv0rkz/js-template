@@ -121,12 +121,55 @@ export default {
 
   /**
    * Автообновление зависимостей
-   * @type {'dependabot' | 'renovate' | false}
    *
-   * 'dependabot' — создаст .github/dependabot.yml
-   * 'renovate'   — создаст renovate.json
-   * false        — отключено
+   * Короткая форма:
+   *   depUpdater: 'dependabot'   — создаст .github/dependabot.yml
+   *   depUpdater: 'renovate'     — создаст renovate.json
+   *   depUpdater: false          — отключено
+   *
+   * Расширенная форма (только dependabot):
+   *   depUpdater: {
+   *     type: 'dependabot',
+   *     ignoreMajor: true,                       // не открывать major PR-ы
+   *     ignore: { major: true, minor: false },   // или более гранулярно
+   *     autoMerge: { patch: true, minor: true, major: false },
+   *   }
+   *
+   * При `autoMerge` jst дополнительно создаёт
+   * .github/workflows/dependabot-auto-merge.yml
    */
   depUpdater: false,
+
+  /**
+   * Continuous Integration (GitHub Actions)
+   *
+   * При `enable: true` команда `jst setup-ci` (и `jst apply`) создаёт
+   * .github/workflows/ci.yml — workflow с по одной job на каждый check.
+   * Имя job совпадает с именем npm-скрипта, который оно запускает.
+   *
+   *   ci.yml: jobs.lint → runs `npm run lint`
+   *           jobs.test → runs `npm run test`
+   */
+  ci: {
+    enable: false,
+    checks: ['lint', 'test'],
+    nodeVersion: '20',
+  },
+
+  /**
+   * Branch protection (через `gh api`)
+   *
+   * Команда `jst setup-branch-protection` настраивает защиту главной ветки
+   * через GitHub API. Не запускается автоматически в `jst apply` —
+   * требует admin прав на репозитории.
+   *
+   *   requiredChecks — список обязательных status checks (должны совпадать
+   *   с именами job-ов из ci.checks).
+   */
+  branchProtection: {
+    enable: false,
+    requiredChecks: [],
+    enforceAdmins: false,
+  },
 
 }

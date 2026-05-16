@@ -35,6 +35,28 @@ const DEFAULTS = {
     },
   },
   depUpdater: false,
+  ci: {
+    enable: false,
+    checks: ['lint', 'test'],
+    nodeVersion: '20',
+  },
+  branchProtection: {
+    enable: false,
+    requiredChecks: [],
+    enforceAdmins: false,
+  },
+}
+
+/**
+ * Normalizes `depUpdater` to an object form.
+ *   false               → { type: false }
+ *   'dependabot'        → { type: 'dependabot' }
+ *   { type, ...opts }   → unchanged
+ */
+export function normalizeDepUpdater(depUpdater) {
+  if (!depUpdater) return { type: false }
+  if (typeof depUpdater === 'string') return { type: depUpdater }
+  return { type: false, ...depUpdater }
 }
 
 // --- Branch pattern template engine ---

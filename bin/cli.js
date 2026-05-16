@@ -101,6 +101,14 @@ const commands = {
     spawnSync('node', [join(toolsDir, 'setup-deps.js')], { stdio: 'inherit' })
   },
 
+  'setup-ci': () => {
+    spawnSync('node', [join(toolsDir, 'setup-ci.js')], { stdio: 'inherit' })
+  },
+
+  'setup-branch-protection': () => {
+    spawnSync('node', [join(toolsDir, 'setup-branch-protection.js')], { stdio: 'inherit' })
+  },
+
   upgrade: () => {
     spawnSync('node', [join(toolsDir, 'upgrade.js')], { stdio: 'inherit' })
   },
@@ -109,7 +117,10 @@ const commands = {
     console.log('⚙️  Применение jst.config.js...\n')
     spawnSync('node', [join(toolsDir, 'setup-labels.js')], { stdio: 'inherit' })
     spawnSync('node', [join(toolsDir, 'setup-deps.js')], { stdio: 'inherit' })
+    spawnSync('node', [join(toolsDir, 'setup-ci.js')], { stdio: 'inherit' })
     console.log('\n✅ Конфиг применён!')
+    console.log('💡 Branch protection не применяется автоматически (требует admin прав).')
+    console.log('   Запусти вручную: npm run _ setup-branch-protection')
   },
 
   'pr-list': () => {
@@ -175,6 +186,8 @@ if (commands[command]) {
   init-readme               Создать стартовый README.md
   setup-labels              Настроить GitHub labels
   setup-deps                Настроить dependabot/renovate
+  setup-ci                  Сгенерировать .github/workflows/ci.yml
+  setup-branch-protection   Настроить защиту главной ветки (gh api)
 
 🔧 РАЗРАБОТКА:
   update-readme             Обновить README с версией
